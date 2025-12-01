@@ -7,32 +7,46 @@ Torque polynomial fitting tool.
 """
 
 import argparse
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np  # noqa: TID253
+import numpy.typing as npt  # noqa: TID253
 
 
-def fit_torque_poly(t, tau, degree=6):
+def fit_torque_poly(
+    t: npt.ArrayLike, tau: npt.ArrayLike, degree: int = 6
+) -> npt.NDArray[np.float64]:
     """
     Fit polynomial: tau(t) ≈ p(t) = c0 + c1 t + ... + cN t^N
     Returns coefficients (highest degree first, like np.polyval).
     """
-    t = np.asarray(t).flatten()
-    tau = np.asarray(tau).flatten()
-    if t.shape != tau.shape:
+    t_arr = np.asarray(t, dtype=np.float64).flatten()
+    tau_arr = np.asarray(tau, dtype=np.float64).flatten()
+    if t_arr.shape != tau_arr.shape:
         raise ValueError("t and tau must have same shape")
-    coeffs = np.polyfit(t, tau, degree)
-    return coeffs
+    coeffs = np.polyfit(t_arr, tau_arr, degree)
+    return np.asarray(coeffs, dtype=np.float64)
 
 
-def evaluate_torque_poly(coeffs, t):
-    return np.polyval(coeffs, t)
+def evaluate_torque_poly(
+    coeffs: npt.NDArray[np.float64], t: npt.ArrayLike
+) -> npt.NDArray[np.float64]:
+    t_arr = np.asarray(t, dtype=np.float64)
+    result = np.polyval(coeffs, t_arr)
+    return np.asarray(result, dtype=np.float64)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Fit polynomial to torque vs time data.")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Fit polynomial to torque vs time data."
+    )
     parser.add_argument("csv", help="CSV file with columns t, tau")
-    parser.add_argument("-d", "--degree", type=int, default=6, help="Polynomial degree (default: 6)")
-    parser.add_argument("-o", "--out", type=str, default="", help="Output .npy file for coefficients")
+    parser.add_argument(
+        "-d", "--degree", type=int, default=6, help="Polynomial degree (default: 6)"
+    )
+    parser.add_argument(
+        "-o", "--out", type=str, default="", help="Output .npy file for coefficients"
+    )
     args = parser.parse_args()
 
     data = np.loadtxt(args.csv, delimiter=",", skiprows=1)
