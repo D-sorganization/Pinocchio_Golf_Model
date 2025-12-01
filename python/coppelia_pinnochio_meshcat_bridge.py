@@ -8,8 +8,8 @@ configuration in Pinocchio's Meshcat visualizer.
 import logging
 import time
 
-import numpy as np  # noqa: TID253
-import numpy.typing as npt  # noqa: TID253
+import numpy as np
+import numpy.typing as npt
 import pinocchio as pin
 from pinocchio.visualize import MeshcatVisualizer
 from zmqRemoteApi import RemoteAPIClient
@@ -51,7 +51,7 @@ logger.info("Model loaded: nq=%s, nv=%s", model.nq, model.nv)
 
 
 # Map CoppeliaSim joint names to handles and to Pinocchio indices.
-def build_joint_mapping(sim: object, model: object) -> tuple[list[int], list[int]]:  # noqa: ANN401
+def build_joint_mapping(sim: object, model: object) -> tuple[list[int], list[int]]:
     """Map CoppeliaSim joint names to handles and Pinocchio indices.
 
     Args:
@@ -105,7 +105,7 @@ logger.info("Joint mapping established.")
 # === MAIN LOOP =======================================================
 
 
-def read_joint_positions(sim: object, handles: list[int]) -> npt.NDArray[np.float64]:  # noqa: ANN401
+def read_joint_positions(sim: object, handles: list[int]) -> npt.NDArray[np.float64]:
     """Read joint positions from CoppeliaSim.
 
     Args:
