@@ -39,8 +39,8 @@ class PinocchioGUI(QtWidgets.QWidget):
         # Internal state
         self.model = None
         self.data = None
-        self.joint_sliders = []
-        self.joint_names = []
+        self.joint_sliders: list[QtWidgets.QSlider] = []
+        self.joint_names: list[str] = []
 
         # Meshcat viewer
         self.viewer = viz.Visualizer(zmq_url="tcp://127.0.0.1:6000")
@@ -117,7 +117,11 @@ class PinocchioGUI(QtWidgets.QWidget):
 
         try:
             self.model = pin.buildModelFromUrdf(fname)
+            if self.model is None:
+                raise RuntimeError("Failed to build model from URDF")
             self.data = self.model.createData()
+            if self.data is None:
+                raise RuntimeError("Failed to create model data")
             self.frame_box.clear()
 
             # Setup frames for Jacobian query
@@ -142,6 +146,8 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def create_sliders(self) -> None:
         """Create sliders for joint control."""
+        if not self.model:
+            return
         # Clear old sliders
         for s in self.joint_sliders:
             s.deleteLater()
@@ -169,7 +175,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def update_viewer_joints(self) -> None:
         """Update viewer with current joint positions."""
-        if not self.model:
+        if not self.model or not self.data:
             return
         q = self.get_joint_state()
         self.viewer["robot"].set_joint_positions(q)
@@ -196,7 +202,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_fk(self) -> None:
         """Compute forward kinematics."""
-        if not self.model:
+        if not self.model or not self.data:
             self.log_write("Load a URDF first, Einstein.")
             return
         q = self.get_joint_state()
@@ -210,7 +216,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_mass_matrix(self) -> None:
         """Compute mass matrix."""
-        if not self.model:
+        if not self.model or not self.data:
             self.log_write("URDF first, floor later.")
             return
         q = self.get_joint_state()
@@ -220,7 +226,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_bias_forces(self) -> None:
         """Compute bias forces (gravity + coriolis + centrifugal)."""
-        if not self.model:
+        if not self.model or not self.data:
             return
         q = self.get_joint_state()
         pin.computeGeneralizedGravity(self.model, self.data, np.array(q))
@@ -238,7 +244,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_jacobian(self) -> None:
         """Compute Jacobian for selected frame."""
-        if not self.model:
+        if not self.model or not self.data:
             self.log_write("No model, no Jacobian, only sadness.")
             return
         frame_name = self.frame_box.currentText()

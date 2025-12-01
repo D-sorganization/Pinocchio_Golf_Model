@@ -7,12 +7,16 @@ Torque polynomial fitting tool.
 """
 
 import argparse
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np  # noqa: TID253
+import numpy.typing as npt
 
 
-def fit_torque_poly(t, tau, degree=6):
+def fit_torque_poly(
+    t: Any, tau: Any, degree: int = 6
+) -> npt.NDArray[np.float64]:
     """
     Fit polynomial: tau(t) ≈ p(t) = c0 + c1 t + ... + cN t^N
     Returns coefficients (highest degree first, like np.polyval).
@@ -25,11 +29,13 @@ def fit_torque_poly(t, tau, degree=6):
     return coeffs
 
 
-def evaluate_torque_poly(coeffs, t):
+def evaluate_torque_poly(
+    coeffs: npt.NDArray[np.float64], t: Any
+) -> npt.NDArray[np.float64]:
     return np.polyval(coeffs, t)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Fit polynomial to torque vs time data."
     )
