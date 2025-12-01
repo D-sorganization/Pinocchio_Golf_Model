@@ -55,13 +55,13 @@ class PinocchioGUI(QtWidgets.QWidget):
         layout.addWidget(self.load_btn)
 
         # Scroll Area for Sliders
-        self.scroll = QtWidgets.QScrollArea()
-        self.scroll.setWidgetResizable(True)
+        self.scroll = QtWidgets.QScrollArea()  # type: ignore[assignment]
+        self.scroll.setWidgetResizable(True)  # type: ignore[attr-defined]
         self.slider_container = QtWidgets.QWidget()
         self.slider_layout = QtWidgets.QVBoxLayout()
         self.slider_container.setLayout(self.slider_layout)
-        self.scroll.setWidget(self.slider_container)
-        layout.addWidget(self.scroll, stretch=3)
+        self.scroll.setWidget(self.slider_container)  # type: ignore[attr-defined]
+        layout.addWidget(self.scroll, stretch=3)  # type: ignore[arg-type]
 
         # Robot Computation Panel
         compute_layout = QtWidgets.QGridLayout()
