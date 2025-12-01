@@ -1,24 +1,38 @@
-# r1
-# Pinocchio GUI Wrapper (PyQt6 + meshcat)
-# Total lines: 138
+"""Pinocchio GUI Wrapper (PyQt6 + meshcat)."""
 
+import logging
 import sys
-from PyQt6 import QtWidgets, QtCore
-import pinocchio as pin
-import numpy as np
+
 import meshcat.geometry as g
 import meshcat.visualizer as viz
+import numpy as np  # noqa: TID253
+import pinocchio as pin
+from PyQt6 import QtCore, QtWidgets
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 class LogPanel(QtWidgets.QTextEdit):
-    def __init__(self):
+    """Log panel widget for displaying messages."""
+
+    def __init__(self) -> None:
+        """Initialize the log panel."""
         super().__init__()
         self.setReadOnly(True)
-        self.setStyleSheet("background:#111; color:#0F0; font-family:Consolas; font-size:12px;")
+        self.setStyleSheet(
+            "background:#111; color:#0F0; font-family:Consolas; font-size:12px;"
+        )
 
 
 class PinocchioGUI(QtWidgets.QWidget):
-    def __init__(self):
+    """Main GUI widget for Pinocchio robot visualization and computation."""
+
+    def __init__(self) -> None:
+        """Initialize the Pinocchio GUI."""
         super().__init__()
         self.setWindowTitle("Pinocchio UI: Robot Math With No Floor")
 
@@ -84,11 +98,17 @@ class PinocchioGUI(QtWidgets.QWidget):
         self.setLayout(layout)
         self.resize(500, 700)
 
-    def log_write(self, text):
-        self.log.append(text)
-        print(text)
+    def log_write(self, text: str) -> None:
+        """Write text to log panel.
 
-    def load_urdf(self):
+        Args:
+            text: Text to write
+        """
+        self.log.append(text)
+        logger.info("%s", text)
+
+    def load_urdf(self) -> None:
+        """Load URDF file and initialize model."""
         fname, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Select URDF File", "", "URDF Files (*.urdf *.xml)"
         )
@@ -101,7 +121,7 @@ class PinocchioGUI(QtWidgets.QWidget):
             self.frame_box.clear()
 
             # Setup frames for Jacobian query
-            for i, frame in enumerate(self.model.frames):
+            for _i, frame in enumerate(self.model.frames):
                 self.frame_box.addItem(frame.name)
 
             # Create sliders
@@ -111,12 +131,17 @@ class PinocchioGUI(QtWidgets.QWidget):
             self.viewer["robot"].delete()
             self.viewer["robot"].set_object(g.URDFLoader().load(fname))
             self.log_write(f"✅ URDF loaded: {fname}")
-            self.log_write(f"Model has {self.model.nq} generalized coordinates and {len(self.model.frames)} frames.")
+            msg = (
+                f"Model has {self.model.nq} generalized coordinates "
+                f"and {len(self.model.frames)} frames."
+            )
+            self.log_write(msg)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.log_write(f"❌ Failed to load URDF: {e}")
 
-    def create_sliders(self):
+    def create_sliders(self) -> None:
+        """Create sliders for joint control."""
         # Clear old sliders
         for s in self.joint_sliders:
             s.deleteLater()
@@ -142,9 +167,8 @@ class PinocchioGUI(QtWidgets.QWidget):
             self.slider_layout.addWidget(slider)
             self.joint_sliders.append(slider)
 
-        self.joint_sliders = self.joint_sliders
-
-    def update_viewer_joints(self):
+    def update_viewer_joints(self) -> None:
+        """Update viewer with current joint positions."""
         if not self.model:
             return
         q = self.get_joint_state()
@@ -153,24 +177,25 @@ class PinocchioGUI(QtWidgets.QWidget):
 
         # Draw local axes for each joint
         for jid, name in enumerate(self.joint_names):
-            frame = self.model.frames[jid+1]
-            oMf = self.data.oMf[jid+1]
+            o_mf = self.data.oMf[jid + 1]
             self.viewer[f"overlay/joint_axes/{name}"].set_object(
-                g.Triad(scale=0.1), oMf
+                g.Triad(scale=0.1), o_mf
             )
 
-    def update_viewer_joints(self):
-        self.update_viewer_joints()
+    def get_joint_state(self) -> list[float]:
+        """Get current joint state from sliders.
 
-    def get_joint_state(self):
+        Returns:
+            List of joint positions in radians
+        """
         if not self.model:
             return []
-        q = []
-        for s in self.joint_sliders:
-            q.append(s.value() / 100.0)  # Using radian approx mapping
-        return q
+        return [
+            s.value() / 100.0 for s in self.joint_sliders
+        ]  # Using radian approx mapping
 
-    def compute_fk(self):
+    def compute_fk(self) -> None:
+        """Compute forward kinematics."""
         if not self.model:
             self.log_write("Load a URDF first, Einstein.")
             return
@@ -183,27 +208,36 @@ class PinocchioGUI(QtWidgets.QWidget):
         self.log_write(f"Position = {np.round(pos, 4)}")
         self.viewer["robot"].set_joint_positions(q)
 
-    def compute_mass_matrix(self):
+    def compute_mass_matrix(self) -> None:
+        """Compute mass matrix."""
         if not self.model:
             self.log_write("URDF first, floor later.")
             return
         q = self.get_joint_state()
-        M = pin.crba(self.model, self.data, np.array(q))
+        m_matrix = pin.crba(self.model, self.data, np.array(q))
         self.log_write("Mass matrix M(q):")
-        self.log_write(str(np.round(M, 4)))
+        self.log_write(str(np.round(m_matrix, 4)))
 
-    def compute_bias_forces(self):
+    def compute_bias_forces(self) -> None:
+        """Compute bias forces (gravity + coriolis + centrifugal)."""
         if not self.model:
             return
         q = self.get_joint_state()
         pin.computeGeneralizedGravity(self.model, self.data, np.array(q))
-        pin.rnea(self.model, self.data, np.array(q), np.zeros(self.model.nv), np.zeros(self.model.nv))
+        pin.rnea(
+            self.model,
+            self.data,
+            np.array(q),
+            np.zeros(self.model.nv),
+            np.zeros(self.model.nv),
+        )
         b = self.data.nle  # nonlinear effects vector
 
         self.log_write("Bias terms (gravity + coriolis + centrifugal):")
         self.log_write(str(np.round(b, 4)))
 
-    def compute_jacobian(self):
+    def compute_jacobian(self) -> None:
+        """Compute Jacobian for selected frame."""
         if not self.model:
             self.log_write("No model, no Jacobian, only sadness.")
             return
@@ -213,31 +247,20 @@ class PinocchioGUI(QtWidgets.QWidget):
 
         pin.forwardKinematics(self.model, self.data, np.array(q))
         pin.updateFramePlacements(self.model, self.data)
-        J = pin.computeFrameJacobian(self.model, self.data, np.array(q), frame_id, pin.ReferenceFrame.LOCAL_WORLD_ALIGNED)
+        j_matrix = pin.computeFrameJacobian(
+            self.model,
+            self.data,
+            np.array(q),
+            frame_id,
+            pin.ReferenceFrame.LOCAL_WORLD_ALIGNED,
+        )
 
         self.log_write(f"Jacobian for frame '{frame_name}' (LOCAL_WORLD_ALIGNED):")
-        self.log_write(str(np.round(J, 4)))
-
-    def compute_mass_matrix(self):
-        if not self.state:
-            self.log.append("Load a URDF first.")
-            return
-        M = pin.crba(self.model, self.data, self.state.q)
-        self.log.append("Mass matrix M(q):")
-        self.log.append(str(np.round(M, 4)))
-
-    def get_joint_state(self):
-        if not self.model:
-            return None
-        q = np.zeros(self.model.nq)
-        idx = 0
-        for i in range(len(self.joint_sliders)):
-            q[idx] = self.joint_sliders[i].value() / 100.0
-            idx += 1
-        return q
+        self.log_write(str(np.round(j_matrix, 4)))
 
 
-def main():
+def main() -> None:
+    """Main entry point for the GUI application."""
     app = QtWidgets.QApplication(sys.argv)
     gui = PinocchioGUI()
     gui.show()

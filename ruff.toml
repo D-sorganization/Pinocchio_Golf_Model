@@ -35,6 +35,24 @@ exclude = [
     "S101",
     "PLR2004", 
 ]
+# Example scripts - allow prints and missing type hints for external libraries
+"python/coppelia_pinnochio_meshcat_bridge.py" = [
+    "ANN001",  # Missing type annotations (external library types)
+    "T201",    # Print statements (example script)
+]
+"python/pinnochio_polynomial_torque_fitter.py" = [
+    "ANN201",  # Missing return type annotations (example script)
+    "ANN001",  # Missing type annotations (example script)
+    "T201",    # Print statements (example script)
+    "TRY003",  # Exception messages (simple example)
+    "EM101",   # Exception string literals (simple example)
+    "RET504",  # Unnecessary assignments (readability)
+    "FBT003",  # Boolean positional (matplotlib API)
+]
+"python/pinnochio_GUI.py" = [
+    "PLR0915", # Too many statements (GUI initialization is complex)
+    "N999",    # Invalid module name (legacy naming)
+]
 
 [lint.mccabe]
 max-complexity = 10

@@ -7,8 +7,9 @@ Torque polynomial fitting tool.
 """
 
 import argparse
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np  # noqa: TID253
 
 
 def fit_torque_poly(t, tau, degree=6):
@@ -29,10 +30,16 @@ def evaluate_torque_poly(coeffs, t):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fit polynomial to torque vs time data.")
+    parser = argparse.ArgumentParser(
+        description="Fit polynomial to torque vs time data."
+    )
     parser.add_argument("csv", help="CSV file with columns t, tau")
-    parser.add_argument("-d", "--degree", type=int, default=6, help="Polynomial degree (default: 6)")
-    parser.add_argument("-o", "--out", type=str, default="", help="Output .npy file for coefficients")
+    parser.add_argument(
+        "-d", "--degree", type=int, default=6, help="Polynomial degree (default: 6)"
+    )
+    parser.add_argument(
+        "-o", "--out", type=str, default="", help="Output .npy file for coefficients"
+    )
     args = parser.parse_args()
 
     data = np.loadtxt(args.csv, delimiter=",", skiprows=1)
