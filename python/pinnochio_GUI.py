@@ -55,13 +55,13 @@ class PinocchioGUI(QtWidgets.QWidget):
         layout.addWidget(self.load_btn)
 
         # Scroll Area for Sliders
-        self.scroll = QtWidgets.QScrollArea()  # type: ignore[assignment]
-        self.scroll.setWidgetResizable(True)  # type: ignore[attr-defined]
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
         self.slider_container = QtWidgets.QWidget()
         self.slider_layout = QtWidgets.QVBoxLayout()
         self.slider_container.setLayout(self.slider_layout)
-        self.scroll.setWidget(self.slider_container)  # type: ignore[attr-defined]
-        layout.addWidget(self.scroll, stretch=3)  # type: ignore[arg-type]
+        self.scroll.setWidget(self.slider_container)
+        layout.addWidget(self.scroll, stretch=3)
 
         # Robot Computation Panel
         compute_layout = QtWidgets.QGridLayout()
@@ -124,6 +124,7 @@ class PinocchioGUI(QtWidgets.QWidget):
             if self.data is None:
                 msg = "Failed to create model data"
                 raise RuntimeError(msg)
+            # Type narrowing: at this point, self.model and self.data are guaranteed to be non-None
             self.frame_box.clear()
 
             # Setup frames for Jacobian query
@@ -148,7 +149,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def create_sliders(self) -> None:
         """Create sliders for joint control."""
-        if not self.model:
+        if self.model is None:
             return
         # Clear old sliders
         for s in self.joint_sliders:
@@ -177,7 +178,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def update_viewer_joints(self) -> None:
         """Update viewer with current joint positions."""
-        if not self.model or not self.data:
+        if self.model is None or self.data is None:
             return
         q = self.get_joint_state()
         self.viewer["robot"].set_joint_positions(q)
@@ -196,7 +197,7 @@ class PinocchioGUI(QtWidgets.QWidget):
         Returns:
             List of joint positions in radians
         """
-        if not self.model:
+        if self.model is None:
             return []
         return [
             s.value() / 100.0 for s in self.joint_sliders
@@ -204,7 +205,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_fk(self) -> None:
         """Compute forward kinematics."""
-        if not self.model or not self.data:
+        if self.model is None or self.data is None:
             self.log_write("Load a URDF first, Einstein.")
             return
         q = self.get_joint_state()
@@ -218,7 +219,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_mass_matrix(self) -> None:
         """Compute mass matrix."""
-        if not self.model or not self.data:
+        if self.model is None or self.data is None:
             self.log_write("URDF first, floor later.")
             return
         q = self.get_joint_state()
@@ -228,7 +229,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_bias_forces(self) -> None:
         """Compute bias forces (gravity + coriolis + centrifugal)."""
-        if not self.model or not self.data:
+        if self.model is None or self.data is None:
             return
         q = self.get_joint_state()
         pin.computeGeneralizedGravity(self.model, self.data, np.array(q))
@@ -246,7 +247,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
     def compute_jacobian(self) -> None:
         """Compute Jacobian for selected frame."""
-        if not self.model or not self.data:
+        if self.model is None or self.data is None:
             self.log_write("No model, no Jacobian, only sadness.")
             return
         frame_name = self.frame_box.currentText()

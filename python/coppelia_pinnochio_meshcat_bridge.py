@@ -67,7 +67,7 @@ def build_joint_mapping(sim: object, model: object) -> tuple[list[int], list[int
     pin_indices: list[int] = []
 
     for name in COPPELIA_JOINT_NAMES:
-        h = sim.getObject(name)
+        h = sim.getObject(name)  # type: ignore[attr-defined]
         if h == -1:
             msg = f"Coppelia joint '{name}' not found"
             raise RuntimeError(msg)
@@ -75,13 +75,13 @@ def build_joint_mapping(sim: object, model: object) -> tuple[list[int], list[int
         # For simplicity, assume every joint corresponds to one DoF
         # and that order of COPPELIA_JOINT_NAMES matches pinocchio's joint order
         # (excluding the universe joint). You can make this more robust as needed.
-        joint_id = model.getJointId(name)
+        joint_id = model.getJointId(name)  # type: ignore[attr-defined]
         if joint_id == 0:
             msg = f"Pinocchio joint '{name}' not found"
             raise RuntimeError(msg)
 
         # index in q for this joint's first DoF (for revolute: one DoF)
-        idx_q = model.idx_qs[joint_id]  # starting index in q
+        idx_q = model.idx_qs[joint_id]  # type: ignore[attr-defined]  # starting index in q
         handles.append(h)
         pin_indices.append(idx_q)
 
@@ -118,7 +118,7 @@ def read_joint_positions(sim: object, handles: list[int]) -> npt.NDArray[np.floa
     q_joint: list[float] = []
     for h in handles:
         # For revolute joints, position is angle (rad)
-        pos = sim.getJointPosition(h)
+        pos = sim.getJointPosition(h)  # type: ignore[attr-defined]
         q_joint.append(pos)
     return np.array(q_joint)
 
