@@ -26,16 +26,20 @@ types-PyYAML==6.0.12.12
 # Modeling Stack (Pinocchio, Pink, Drake, QP solvers)
 # ============================================================================
 # Pinocchio - Analytical dynamics library
-pin>=2.6.0
+# Constrained to avoid dependency resolution depth issues
+pin>=2.6.0,<3.0.0
 
 # Pink (pin-pink) - Stacked on top of Pinocchio for advanced kinematics
-pin-pink
+# Requires pin, so install after pin
+pin-pink>=0.1.0
 
 # Drake - Robot manipulation and control
-drake
+# Large dependency tree - constrain to stable version
+drake>=1.0.0,<2.0.0
 
 # QP Solvers - Quadratic programming solvers
-qpsolvers
-osqp
-scs
-quadprog
+# Add version constraints to help pip resolve dependencies
+qpsolvers>=1.12.0
+osqp>=0.6.0
+scs>=3.2.0
+quadprog>=0.1.0
