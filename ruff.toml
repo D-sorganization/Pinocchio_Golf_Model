@@ -1,4 +1,5 @@
-# Ruff configuration for aggressive code quality
+# Unified Ruff configuration for Pinocchio Golf Model
+# Merges strict settings with pragmatic ignores for scientific code
 
 target-version = "py313"
 line-length = 100
@@ -7,9 +8,10 @@ line-length = 100
 # Enable ALL rules then selectively disable
 select = ["ALL"]
 ignore = [
-    "D",      # Docstring checks (we check separately)
+    "D",      # Docstring checks (we check separately/manually for now)
     "COM812", # Missing trailing comma (conflicts with black)
     "ISC001", # Single line implicit string concat
+    "I001",   # Import sorting (handled by isort separately in pre-commit)
 ]
 
 # Stricter than defaults
@@ -28,43 +30,70 @@ exclude = [
 [lint.per-file-ignores]
 # Tests can be more relaxed
 "test_*.py" = [
-    "S101",   # Use of assert
+    "S101",    # Use of assert
     "PLR2004", # Magic numbers allowed in tests
+    "G003",    # Logging statement uses `+`
+    "G004",    # Logging statement uses f-string
+    "TRY401",  # Redundant exception object in logging.exception
+    "ANN001",  # Type annotations less critical in tests
+    "N806",    # Mathematical notation common in tests
+    "SLF001",  # Private member access
+    "PT011",   # pytest.raises(ValueError)
 ]
 "**/tests/*.py" = [
     "S101",
-    "PLR2004", 
+    "PLR2004",
+    "G003",
+    "G004",
+    "TRY401",
+    "ANN001",
+    "N806",
+    "SLF001",
+    "PT011",
 ]
-# Example scripts - allow prints and missing type hints for external libraries
-"python/coppelia_pinnochio_meshcat_bridge.py" = [
-    "ANN001",  # Missing type annotations (external library types)
-    "T201",    # Print statements (example script)
-    "EXE001",  # Shebang present but file not executable (git tracks executable bit)
-    "ICN003",  # typing imports needed for external library types
-    "TID253",  # numpy.typing needed for type annotations
-    "ANN401",  # Any types needed for external library objects (CoppeliaSim, Pinocchio)
+
+# GUI files have high complexity due to widget setup
+"**/gui/*.py" = [
+    "PLR0915", # Too many statements
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments
+    "PLR2004", # Magic numbers
+    "C901",    # Too complex
+    "N802",    # Function name should be lowercase (Qt override methods)
+    "FBT001",  # Boolean positional args
+    "ARG002",  # Unused arguments (Qt signals)
+    "BLE001",  # Blind exceptions
+    "PTH123",  # open() vs Path.open()
+    "E501",    # Line length
+    "SIM102",  # Nested if statements
+    "RUF012",  # Mutable class attributes
+    "ANN204",  # Missing return type for __init__
 ]
-"python/pinnochio_polynomial_torque_fitter.py" = [
-    "ANN201",  # Missing return type annotations (example script)
-    "ANN001",  # Missing type annotations (example script)
-    "T201",    # Print statements (example script)
-    "TRY003",  # Exception messages (simple example)
-    "EM101",   # Exception string literals (simple example)
-    "RET504",  # Unnecessary assignments (readability)
-    "FBT003",  # Boolean positional (matplotlib API)
-    "EXE001",  # Shebang present but file not executable (git tracks executable bit)
+
+# Specific modules from MuJoCo migration
+"python/mujoco_golf_pendulum/advanced_gui.py" = [
+    "PLR0915", "PLR0911", "PLR0912", "PLR0913", "PLR2004", "C901", 
+    "N802", "FBT001", "ARG002", "BLE001", "PTH123", "E501", "SIM102", 
+    "RUF012", "ANN204"
 ]
-"python/pinnochio_GUI.py" = [
-    "PLR0915", # Too many statements (GUI initialization is complex)
-    "N999",    # Invalid module name (legacy naming)
-    "TRY301",  # Abstract raise to inner function (not needed for simple error handling)
-    "TRY003",  # Long exception messages (acceptable in error handling)
-    "EM101",   # Exception string literals (acceptable for simple error messages)
+"python/mujoco_golf_pendulum/sim_widget.py" = [
+    "N802", "SIM102", "ICN003", "PLR0915", "ANN001", "PTH117", 
+    "PLR2004", "PLR0911", "BLE001", "FBT001", "C901"
 ]
-# Quality check script - executable script
-"scripts/quality_check.py" = [
-    "EXE001",  # Shebang present but file not executable (git tracks executable bit)
+"python/mujoco_golf_pendulum/interactive_manipulation.py" = [
+    "PLR0913", "PLR0911", "SIM102", "FBT001", "FBT002", "PLR2004", 
+    "PLR0915", "N806", "ERA001", "PTH123", "TRY300", "BLE001"
 ]
+
+# Scientific modules using mathematical notation
+"**/spatial_algebra/*.py" = ["RUF002", "RUF003", "N802", "N803", "N806", "S101", "ICN003", "PLR0915"]
+"**/rigid_body_dynamics/*.py" = ["RUF002", "RUF003", "N802", "N803", "N806", "S101", "PLR0915", "PLR2004"]
+"**/screw_theory/*.py" = ["RUF002", "RUF003", "N802", "N803", "N806", "S101", "ERA001", "PLR2004"]
+
+# Example scripts
+"python/examples/*.py" = ["PLR0915", "ANN001", "T201", "EXE001", "ICN003", "TID253", "ANN401"]
+"python/pinocchio_golf/coppelia_bridge.py" = ["ANN001", "T201", "EXE001", "ICN003", "TID253", "ANN401"]
 
 [lint.mccabe]
 max-complexity = 10
@@ -81,7 +110,7 @@ multiline-quotes = "double"
 docstring-quotes = "double"
 
 [lint.flake8-import-conventions]
-banned-from = ["typing"]
+banned-from = ["typing"]  # Enforce collections.abc over typing
 
 [lint.flake8-tidy-imports]
-banned-module-level-imports = ["numpy", "pandas"]  # Must import specific items
+banned-module-level-imports = ["numpy", "pandas"]  # Must import specific items if possible, but relax if needed
