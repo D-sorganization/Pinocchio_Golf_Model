@@ -1,0 +1,53 @@
+"""Parser for Gears Motion Capture files (.gpcap)."""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Dict
+
+import numpy as np
+import numpy.typing as npt
+
+logger = logging.getLogger(__name__)
+
+
+class GearsParser:
+    """Parser for proprietary Gears .gpcap binary files."""
+
+    @staticmethod
+    def load(file_path: Path | str) -> Dict[str, npt.NDArray[np.float64]]:
+        """Load .gpcap file.
+
+        Analysis of file format (from probe):
+        - Binary format with mixed ASCII/Wide-char strings.
+        - Contains 'Skeleton' header.
+        - Contains marker names like 'WaistLeft', 'WaistRight', 'HeadTop'.
+        - Data appears to be float32 or float64 streams interleaved or following headers.
+        
+        Currently this parser is a STUB. Full reverse engineering of the binary 
+        layout is required, or a vendor DLL.
+
+        Args:
+            file_path: Path to .gpcap file
+
+        Returns:
+            Dictionary with 'markers' (Dict[str, array]).
+
+        Raises:
+            NotImplementedError: Always raised until implementation is complete.
+        """
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+            
+        logger.warning("GearsParser is experimental/stub.")
+        
+        # TODO: Implement binary parsing based on offsets found in probe.
+        # Structure seems to be: [Len][String: MarkerName] ... [Data]
+        
+        raise NotImplementedError(
+            "Gears .gpcap parser not yet implemented. "
+            "File format requires reverse engineering. "
+            "Please convert to C3D or MAT using Gears software."
+        )

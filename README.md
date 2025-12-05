@@ -1,129 +1,37 @@
-# Project Template
+# Pinocchio Golf Model
 
-This is a template repository for creating new projects with consistent structure, CI/CD workflows, and GitHub Copilot agents.
+## Vision
 
-## Quick Start
+This project aims to produce a complete, free, Python-based golf biomechanics platform, capable of:
 
-```bash
-# 1) Initialize repo + Git LFS
-git init
-git lfs install
+- Modeling a full 3D golfer with realistic joints, limbs, and club
+- Simulating both kinematic and kinetic motion
+- Running inverse dynamics (Pinocchio) and inverse kinematics (PINK)
+- Exploring counterfactual physics (ZTCF, ZVCF, affine control perspective)
+- Visualizing everything in MeshCat, MuJoCo, and Geppetto
+- Supporting future ML-based optimization, control, and experiment generation
+- Running entirely from a user-friendly GUI, with no code needed
+- Embedding a canonical model specification to keep all backends perfectly synchronized
 
-# 2) Install pre-commit hooks
-bash scripts/setup_precommit.sh
+## Architecture Overview
 
-# 3) Protect main (on GitHub): require PR + status checks
-# 4) Start safe WIP branch and code
-git checkout -b chore/wip-$(date +%F)
-```
+The project is built around one invariant principle: **One canonical model → multiple backends.**
 
-## Project Structure
+### Core Backend Stack
 
-This template supports multiple programming languages and platforms:
+- **Pinocchio**: Forward/inverse dynamics, Jacobians, constraints
+- **PINK**: IK, task-space goals, closed-loop IK for complicated joint structures
+- **MuJoCo**: Contact simulation (feet-ground, club-ball), GRF, realistic motion integration
+- **MeshCat**: Browser visualization of Pinocchio/PINK (fast debugging)
+- **Geppetto Viewer**: Desktop visualization of Pinocchio models; ideal for joint validation
+- **Python GUI (PySide6 / Qt)**: End-user interface for interactive exploration
 
-```
-Project_Template/
-├── python/          # Python source code and tests
-│   ├── src/         # Python source files
-│   └── tests/       # Python test files
-├── matlab/          # MATLAB source code and tests
-│   ├── run_all.m    # Main MATLAB script
-│   └── tests/       # MATLAB test files
-├── javascript/      # JavaScript/TypeScript source code
-│   ├── src/         # JavaScript/TypeScript source files
-│   ├── tests/       # JavaScript/TypeScript test files
-│   └── config/      # Configuration files (webpack, babel, etc.)
-├── arduino/         # Arduino sketches and libraries
-│   ├── src/         # Main Arduino sketches (.ino files)
-│   ├── libraries/   # Custom Arduino libraries
-│   └── examples/    # Example sketches
-├── data/            # Data files
-│   └── raw/         # Raw data files
-├── docs/            # Documentation
-├── scripts/         # Utility scripts
-├── output/          # Generated output files
-└── .github/         # GitHub configuration
-    ├── agents/      # GitHub Copilot agents
-    └── workflows/   # CI/CD workflows
-```
-
-## Language-Specific Setup
-
-### Python
+## Installation
 
 ```bash
-cd python
 pip install -r requirements.txt
-# Or use conda:
-conda env create -f environment.yml
 ```
 
-### MATLAB
+## Usage
 
-- Open MATLAB and navigate to the `matlab/` directory
-- Run `run_all.m` to execute all scripts
-- Tests are in `matlab/tests/`
-
-### JavaScript/TypeScript
-
-```bash
-cd javascript
-npm install
-npm test
-```
-
-See `javascript/README.md` for detailed setup instructions.
-
-### Arduino
-
-See `arduino/README.md` for setup instructions. Supports both Arduino IDE and PlatformIO.
-
-## GitHub Copilot Agents
-
-This template includes 6 specialized GitHub Copilot agents in `.github/agents/`:
-
-1. **docs-agent** - Technical writing and documentation
-2. **script-agent** - Cross-platform shell scripting
-3. **security-agent** - Security analysis and branch protection
-4. **git-workflow-agent** - Git operations and branch management
-5. **ci-cd-agent** - CI/CD documentation and standards
-6. **markdown-lint-agent** - Documentation quality enforcement
-
-These agents provide intelligent assistance for repository management tasks. They are automatically available when using GitHub Copilot in this repository.
-
-## Daily Safety
-
-- Commit every ~30 minutes (`wip:` if tests fail).
-- End-of-day snapshot: `bash scripts/snapshot.sh`.
-- Big AI refactor? Create `backup/before-ai-<desc>` branch first.
-
-## Reproducibility
-
-- `matlab/run_all.m` should regenerate results.
-- Python env pinned via `python/requirements.txt` or `python/environment.yml`.
-- JavaScript dependencies in `javascript/package.json`.
-- Arduino libraries documented in `arduino/README.md`.
-
-## CI/CD
-
-This template includes GitHub Actions workflows for:
-- Code quality checks
-- Linting and formatting
-- Testing across multiple Python versions
-- Security scanning
-- Documentation validation
-
-See `.github/workflows/` for workflow definitions.
-
-## Cursor Settings Synchronization
-
-This repository includes optimized Cursor settings for cross-computer development:
-
-- **`cursor-settings.json`** - Complete settings with stall prevention and performance optimization
-- **`CURSOR_SETTINGS_README.md`** - Detailed usage guide for syncing settings across computers
-
-Copy these settings to your Cursor `settings.json` for consistent development experience.
-
-## License
-
-See `LICENSE` file for license information.
+(Coming soon)
