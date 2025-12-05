@@ -27,8 +27,9 @@ types-PyYAML==6.0.12.12
 # ============================================================================
 # Pinocchio - Analytical dynamics library
 # Use specific version to avoid dependency resolution depth issues
-# Version 2.6.17 is the latest stable 2.6.x release
-pin==2.6.17
+# Note: 'pin' package on PyPI is unrelated. Use 'pinocchio' (conda) or 'libpinocchio' (pip)
+# We use 'pinocchio' here to match common usage, but CI excludes this file.
+pinocchio>=2.6.17
 
 # Pink (pin-pink) - Stacked on top of Pinocchio for advanced kinematics
 # Requires pin, so install after pin
