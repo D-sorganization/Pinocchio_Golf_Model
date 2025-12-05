@@ -398,8 +398,6 @@ class AdvancedKinematicsAnalyzer:
         q_clamped = q.copy()
 
         for i in range(min(len(q), self.model.njnt)):
-            self.model.jnt_type[i]
-
             # Only clamp limited joints
             if self.model.jnt_limited[i]:
                 q_min = self.model.jnt_range[i, 0]

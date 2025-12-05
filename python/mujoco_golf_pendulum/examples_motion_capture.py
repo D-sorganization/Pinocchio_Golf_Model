@@ -31,7 +31,7 @@ from .motion_capture import (
 )
 
 
-def example_1_load_motion_capture() -> None:
+def example_1_load_motion_capture() -> MotionCaptureSequence:
     """Example 1: Load motion capture data from file.
 
     Demonstrates loading mocap data from CSV and JSON formats.
@@ -70,7 +70,7 @@ def example_1_load_motion_capture() -> None:
     return mocap_sequence  # type: ignore[return-value]
 
 
-def example_2_motion_retargeting() -> None:
+def example_2_motion_retargeting() -> tuple[np.ndarray, np.ndarray]:
     """Example 2: Retarget motion capture to MuJoCo model.
 
     Shows how to map marker positions to joint angles using IK.
@@ -115,7 +115,7 @@ def example_2_motion_retargeting() -> None:
 
     100.0 * sum(success_flags) / len(success_flags)
 
-    return times_ret, joint_traj  # type: ignore[return-value]
+    return times_ret, joint_traj
 
 
 def example_3_compute_kinematic_forces() -> None:
@@ -183,7 +183,7 @@ def example_3_compute_kinematic_forces() -> None:
     return force_data_list  # type: ignore[return-value]
 
 
-def example_4_inverse_dynamics() -> None:
+def example_4_inverse_dynamics() -> list[InverseDynamicsResult]:
     """Example 4: Full inverse dynamics analysis.
 
     Compute required joint torques for a given motion.
@@ -260,7 +260,7 @@ def example_4_inverse_dynamics() -> None:
 
     export_inverse_dynamics_to_csv(times, id_results, "inverse_dynamics.csv")
 
-    return id_results  # type: ignore[return-value]
+    return id_results
 
 
 def example_5_complete_analysis_pipeline() -> None:

@@ -137,9 +137,6 @@ class UniversalJointAnalyzer:
             msg = "One or both joints not found"
             raise ValueError(msg)
 
-        self.model.jnt_qposadr[input_id]
-        self.model.jnt_qposadr[output_id]
-
         # Sample over full rotations
         angles = np.linspace(0, 2 * np.pi * num_cycles, num_cycles * 360)
         velocity_ratios = []

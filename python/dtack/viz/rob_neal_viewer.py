@@ -135,19 +135,19 @@ class RobNealDataViewer:
         self.viewer["club/hands"].set_object(
             g.Sphere(0.02), g.MeshBasicMaterial(color=0x0000FF)
         )
-        self.viewer["club/hands"].set_transform(
-            np.eye(4)
-            + np.array([[0, 0, 0, midhands_xyz[0]], [0, 0, 0, midhands_xyz[1]], [0, 0, 0, midhands_xyz[2]], [0, 0, 0, 0]])
-        )
+        # Construct proper homogeneous transformation matrix for hands position
+        hands_transform = np.eye(4)
+        hands_transform[:3, 3] = midhands_xyz
+        self.viewer["club/hands"].set_transform(hands_transform)
 
         # Draw clubface position
         self.viewer["club/face"].set_object(
             g.Sphere(0.03), g.MeshBasicMaterial(color=0xFF0000)
         )
-        self.viewer["club/face"].set_transform(
-            np.eye(4)
-            + np.array([[0, 0, 0, clubface_xyz[0]], [0, 0, 0, clubface_xyz[1]], [0, 0, 0, clubface_xyz[2]], [0, 0, 0, 0]])
-        )
+        # Construct proper homogeneous transformation matrix for clubface position
+        clubface_transform = np.eye(4)
+        clubface_transform[:3, 3] = clubface_xyz
+        self.viewer["club/face"].set_transform(clubface_transform)
 
         # Show trace if requested
         if show_trace and frame > 0:

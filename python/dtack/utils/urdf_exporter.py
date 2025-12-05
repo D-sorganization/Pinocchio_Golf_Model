@@ -55,8 +55,7 @@ class URDFExporter:
             lines.extend(self._generate_segment_urdf(segment, root["name"]))
 
         lines.append("</robot>")
-        return "
-".join(lines)
+        return "\n".join(lines)
 
     def _generate_segment_urdf(self, segment: dict, parent_name: str) -> list[str]:
         """Generate URDF for a segment.

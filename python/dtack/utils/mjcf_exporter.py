@@ -66,8 +66,7 @@ class MJCFExporter:
 
         lines.append("  </worldbody>")
         lines.append("</mujoco>")
-        return "
-".join(lines)
+        return "\n".join(lines)
 
     def _generate_segments_mjcf(self, parent_name: str, depth: int = 1) -> list[str]:
         """Generate MJCF for segments recursively.

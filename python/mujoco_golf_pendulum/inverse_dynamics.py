@@ -219,15 +219,10 @@ class InverseDynamicsSolver:
             i for i in range(self.model.nv) if i not in constrained_joints
         ]
 
-        # Extract actuated torques
-        full_result.joint_torques[actuated_joints]
-
-        # For constrained joints, torques come from constraints
-        np.zeros(len(constrained_joints))
-        if full_result.constraint_forces is not None:
-            full_result.constraint_forces[constrained_joints]
-
-        return full_result  # Return full result with constraint info
+        # Return full result with constraint info
+        # Note: Actuated torques are in full_result.joint_torques[actuated_joints]
+        # Constrained joint torques come from constraint_forces if available
+        return full_result
 
     def decompose_forces(
         self,
