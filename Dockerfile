@@ -1,4 +1,4 @@
-# Pinnochio Golf Model - Docker Development Environment
+# Pinocchio Golf Model - Docker Development Environment
 FROM ubuntu:22.04
 
 # Prevent interactive prompts during installation
@@ -37,7 +37,7 @@ RUN wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mi
 ENV PATH="/opt/conda/bin:$PATH"
 
 # Create conda environment for visualization (Gepetto Viewer)
-RUN conda create -y -n pinnochio-viz python=3.10 \
+RUN conda create -y -n pinocchio-viz python=3.10 \
     -c conda-forge gepetto-viewer gepetto-viewer-corba pinocchio \
     && conda clean -afy
 
@@ -45,29 +45,9 @@ RUN conda create -y -n pinnochio-viz python=3.10 \
 RUN python3.10 -m venv /opt/modeling && \
     /opt/modeling/bin/pip install --upgrade pip setuptools wheel
 
-# Install modeling dependencies
-RUN /opt/modeling/bin/pip install \
-    numpy==2.1.0 \
-    pandas==2.2.3 \
-    matplotlib==3.9.1 \
-    scipy==1.14.0 \
-    pin>=2.6.0 \
-    pin-pink \
-    drake \
-    qpsolvers \
-    osqp \
-    scs \
-    quadprog \
-    pytest==8.2.1 \
-    pytest-cov==5.0.0 \
-    pytest-mock==3.14.0 \
-    ruff==0.5.0 \
-    black==24.4.2 \
-    mypy==1.10.0 \
-    pre-commit==4.0.0 \
-    pyyaml==6.0.1 \
-    pathlib2==2.3.7 \
-    types-PyYAML==6.0.12.12
+# Copy requirements.txt and install modeling dependencies
+COPY python/requirements.txt /workspace/python/requirements.txt
+RUN /opt/modeling/bin/pip install -r /workspace/python/requirements.txt
 
 # Set working directory
 WORKDIR /workspace

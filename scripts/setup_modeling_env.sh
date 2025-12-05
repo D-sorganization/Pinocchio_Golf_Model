@@ -20,7 +20,23 @@ echo ">>> Updating apt package lists..."
 sudo apt update
 
 echo ">>> Installing system dependencies..."
-sudo apt install -y         build-essential         cmake         pkg-config         git         python3-dev         python3-pip         python3-venv         libeigen3-dev         libboost-all-dev         liburdfdom-dev         liboctomap-dev         libassimp-dev         libspdlog-dev         libfmt-dev         libccd-dev         libfcl-dev
+sudo apt install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    git \
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    libeigen3-dev \
+    libboost-all-dev \
+    liburdfdom-dev \
+    liboctomap-dev \
+    libassimp-dev \
+    libspdlog-dev \
+    libfmt-dev \
+    libccd-dev \
+    libfcl-dev
 
 # ------------------------------------------------------------------------------
 # 3. Create (or reuse) project-specific venv

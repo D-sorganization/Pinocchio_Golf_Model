@@ -38,7 +38,7 @@ source "${CONDA_DIR}/etc/profile.d/conda.sh" 2>/dev/null || {
 # 2. Create (or reuse) project-specific 'viz' conda environment
 # ------------------------------------------------------------------------------
 
-ENV_NAME="pinnochio-viz"
+ENV_NAME="pinocchio-viz"
 
 if "${CONDA_BIN}" env list | grep -qE "^${ENV_NAME} "; then
   echo ">>> Conda env '${ENV_NAME}' already exists (reusing)."
