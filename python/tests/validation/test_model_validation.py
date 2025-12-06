@@ -15,7 +15,9 @@ class TestModelValidation:
         # Root is 3 levels up: python/tests/validation/ -> python/tests/ -> python/ -> root
         repo_root = Path(__file__).resolve().parents[3]
         yaml_path = repo_root / "models/spec/golfer_canonical.yaml"
-        assert yaml_path.exists(), f"Canonical YAML specification not found at {yaml_path}"
+        assert (
+            yaml_path.exists()
+        ), f"Canonical YAML specification not found at {yaml_path}"
 
     def test_yaml_structure(self) -> None:
         """Test that YAML has required structure."""
