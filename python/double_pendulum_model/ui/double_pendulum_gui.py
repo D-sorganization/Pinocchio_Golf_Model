@@ -522,7 +522,7 @@ class DoublePendulumApp:
         if self.data_file_handle is not None:
             return
 
-        timestamp = datetime.now(timezone.utc).strftime(
+        timestamp = datetime.now(timezone.utc).strftime(  # noqa: UP017
             "%Y%m%d_%H%M%S"
         )
         filename = f"pendulum_data_{timestamp}.csv"
