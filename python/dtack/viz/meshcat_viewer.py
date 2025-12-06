@@ -14,9 +14,10 @@ try:
 except ImportError:
     MESHCAT_AVAILABLE = False
 
+import numpy as np
+import numpy.typing as npt
+
 if TYPE_CHECKING:
-    import numpy as np
-    import numpy.typing as npt
     import pinocchio as pin
 
 logger = logging.getLogger(__name__)
