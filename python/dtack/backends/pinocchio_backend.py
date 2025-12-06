@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np  # noqa: TID253
 import numpy.typing as npt  # noqa: TID253
+import typing
 
 try:
     import pinocchio as pin
@@ -16,16 +17,44 @@ except ImportError:
     PINOCCHIO_AVAILABLE = False
 
     # Define dummy pin module to allow import without pinocchio
+    # Define dummy pin module to allow import without pinocchio
     class DummyPin:
-        """Dummy class to prevent NameError when Pinocchio is missing."""
+        """Dummy class to prevent NameError when Pinocchio is missing.
+
+        Any attribute or method access raises ImportError with a clear message.
+        """
+
+        def __getattr__(self, name: str) -> typing.Any:  # noqa: ANN401
+            """Raise ImportError on any attribute access."""
+            msg = (
+                f"Pinocchio is required for '{name}', but is not installed. "
+                "Install with: pip install pin"
+            )
+            raise ImportError(msg)
 
         class ReferenceFrame:
             """Dummy ReferenceFrame enum."""
 
             LOCAL_WORLD_ALIGNED = 0
 
+            def __getattr__(self, name: str) -> typing.Any:  # noqa: ANN401
+                """Raise ImportError on any attribute access."""
+                msg = (
+                    f"Pinocchio ReferenceFrame is required for '{name}', but is not installed. "
+                    "Install with: pip install pin"
+                )
+                raise ImportError(msg)
+
         class SE3:
             """Dummy SE3 class."""
+
+            def __getattr__(self, name: str) -> typing.Any:  # noqa: ANN401
+                """Raise ImportError on any attribute access."""
+                msg = (
+                    f"Pinocchio SE3 is required for '{name}', but is not installed. "
+                    "Install with: pip install pin"
+                )
+                raise ImportError(msg)
 
     pin = DummyPin()
 logger = logging.getLogger(__name__)

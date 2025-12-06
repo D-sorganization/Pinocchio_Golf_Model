@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 # Maximum joint effort (torque) allowed in URDF export.
 # Units: Newton-meters (N⋅m)
 # Source: Typical upper bound for hobbyist/educational robot actuators.
-MAX_EFFORT = 1000.0
+MAX_EFFORT_NM = 1000.0
 
 # Maximum joint velocity allowed in URDF export.
 # Units: Radians per second (rad/s)
 # Source: Typical upper bound for safe robot simulation; adjust as needed for hardware.
-MAX_VELOCITY = 10.0
+MAX_VELOCITY_RAD_S = 10.0
 
 # Minimum degrees of freedom for a universal joint.
 # Universal joints, by definition, require at least 2 rotational axes.
@@ -385,7 +385,7 @@ class URDFExporter:
         if limits and len(limits) == JOINT_LIMIT_COUNT:
             lines.append(
                 f'    <limit lower="{limits[0]}" upper="{limits[1]}" '
-                f'effort="{MAX_EFFORT}" velocity="{MAX_VELOCITY}"/>'
+                f'effort="{MAX_EFFORT_NM}" velocity="{MAX_VELOCITY_RAD_S}"/>'
             )
 
         if damping is not None:
