@@ -22,8 +22,7 @@ def probe(filepath) -> None:
                 if i - len(s) >= 4:
                     pre_bytes = data[i - len(s) - 4 : i - len(s)]
                     pre_value = struct.unpack("<I", pre_bytes)[0]
-                    # We print for debug/verification purposes
-                    # print(f"  Preceding 4 bytes (int): {pre_value}")
+                    print(f"  Preceding 4 bytes (int): {pre_value}")
 
             current_string = []
 
