@@ -14,8 +14,8 @@ try:
 except ImportError:
     MESHCAT_AVAILABLE = False
 
-import numpy as np
-import numpy.typing as npt
+import numpy as np  # noqa: TCH002
+import numpy.typing as npt  # noqa: TCH002
 
 if TYPE_CHECKING:
     import pinocchio as pin
