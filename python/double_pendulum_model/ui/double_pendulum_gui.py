@@ -21,7 +21,7 @@ import tkinter as tk
 import logging
 from dataclasses import dataclass
 import typing
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 if typing.TYPE_CHECKING:
