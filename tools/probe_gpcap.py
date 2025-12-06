@@ -2,7 +2,7 @@
 import struct
 import sys
 
-def probe(filepath) -> None:
+def probe(filepath: str) -> None:
     with open(filepath, "rb") as f:
         data = f.read()
 

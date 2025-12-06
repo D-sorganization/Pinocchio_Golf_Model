@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 import pinocchio as pin
@@ -36,7 +36,7 @@ def create_frame_task(
 
 def create_posture_task(
     cost: float = 1e-3,
-    q_ref: np.ndarray = None
+    q_ref: np.ndarray[Any, Any] | None = None
 ) -> pink.tasks.PostureTask:
     """Create a PostureTask to regularize joint configuration.
 
