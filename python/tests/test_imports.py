@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -16,6 +18,7 @@ def test_import_pinocchio_golf() -> None:
 
 def test_import_gui() -> None:
     """Test importing the GUI module."""
+    pytest.importorskip("pinocchio")
     from python.pinocchio_golf import gui
 
     assert gui is not None
@@ -23,6 +26,7 @@ def test_import_gui() -> None:
 
 def test_import_coppelia_bridge() -> None:
     """Test importing the Coppelia bridge."""
+    pytest.importorskip("pinocchio")
     from python.pinocchio_golf import coppelia_bridge
 
     assert coppelia_bridge is not None
