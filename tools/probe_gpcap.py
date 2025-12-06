@@ -21,7 +21,9 @@ def probe(filepath) -> None:
                 # Check bytes immediately preceding/following for length indicators
                 if i - len(s) >= 4:
                     pre_bytes = data[i - len(s) - 4 : i - len(s)]
-                    struct.unpack("<I", pre_bytes)[0]
+                    pre_value = struct.unpack("<I", pre_bytes)[0]
+                    # We print for debug/verification purposes
+                    # print(f"  Preceding 4 bytes (int): {pre_value}")
 
             current_string = []
 
@@ -29,4 +31,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         probe(sys.argv[1])
     else:
-        pass
+        sys.exit("Usage: python probe_gpcap.py <filepath>")

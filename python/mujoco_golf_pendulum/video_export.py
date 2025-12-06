@@ -397,7 +397,7 @@ def export_simulation_video(
 
                 # Define metrics to display
                 metrics = {
-                    "Frame": lambda d, i=i: i,
+                    "Frame": lambda _, i=i: i,
                 }
 
                 # Add club head speed if available

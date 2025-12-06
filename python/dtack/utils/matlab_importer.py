@@ -123,7 +123,7 @@ class MATLABImporter:
             Dictionary with capture data
 
         Raises:
-            RuntimeError: If parser not implemented
+            RuntimeError: Parser not yet implemented. File format requires reverse engineering.
         """
         from dtack.utils.gears_parser import GearsParser
         return GearsParser.load(file_path)

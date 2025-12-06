@@ -231,7 +231,7 @@ def run_batch(batch_path: Path, base_args: argparse.Namespace) -> None:
         raise ValueError(msg)
 
     for entry in runs:
-        entry.get("name", entry.get("model", "unnamed_run"))
+        # entry.get("name", entry.get("model", "unnamed_run"))
         summary = execute_run(
             model=entry["model"],
             duration=float(entry.get("duration", base_args.duration)),

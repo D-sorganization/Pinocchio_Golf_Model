@@ -59,7 +59,7 @@ def test_ik_convergence() -> None:
         error = np.linalg.norm(current_pose.translation - target_pose.translation)
 
         if i % 10 == 0:
-            pass
+            logging.info(f"Step {i}: Error = {error:.4f}")
 
         if error < 1e-3:
             return

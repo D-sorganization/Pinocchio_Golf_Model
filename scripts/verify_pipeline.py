@@ -42,7 +42,7 @@ def main() -> None:
         PinkSolver(model, data, pin.GeometryModel(), pin.GeometryModel())
         logger.info("PinkSolver instantiated.")
     except Exception as e:
-        logger.exception(f"PinkSolver failed: {e}")
+        logger.exception("PinkSolver failed")
 
     logger.info("5. Verifying Data Import...")
     MATLABImporter()

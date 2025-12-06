@@ -65,4 +65,4 @@ class PINKBackend:
         """
         # NOTE: Implement PINK IK solver
         msg = "PINK IK solver not yet implemented"
-        raise RuntimeError(msg)
+        raise NotImplementedError(msg)
