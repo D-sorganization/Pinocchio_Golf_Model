@@ -40,7 +40,7 @@ class PinocchioGUI(QtWidgets.QWidget):
         self.model = None
         self.data = None
         self.joint_sliders: list[QtWidgets.QSlider] = []
-        self.joint_value_labels: list[QtWidgets.QLabel] = []
+        self.joint_rows: list[QtWidgets.QWidget] = []  # Track row widgets for cleanup
         self.joint_names: list[str] = []
 
         # Meshcat viewer
@@ -52,6 +52,7 @@ class PinocchioGUI(QtWidgets.QWidget):
 
         # URDF Loader Button
         self.load_btn = QtWidgets.QPushButton("Load URDF")
+        self.load_btn.setToolTip("Load a URDF file from the filesystem")
         self.load_btn.clicked.connect(self.load_urdf)
         layout.addWidget(self.load_btn)
 
@@ -68,20 +69,25 @@ class PinocchioGUI(QtWidgets.QWidget):
         compute_layout = QtWidgets.QGridLayout()
 
         self.fk_btn = QtWidgets.QPushButton("Forward Kinematics")
+        self.fk_btn.setToolTip("Compute end-effector position based on current joint angles")
         self.fk_btn.clicked.connect(self.compute_fk)
         compute_layout.addWidget(self.fk_btn, 0, 0)
 
         self.mass_btn = QtWidgets.QPushButton("Mass Matrix")
+        self.mass_btn.setToolTip("Compute the joint space inertia matrix M(q)")
         self.mass_btn.clicked.connect(self.compute_mass_matrix)
         compute_layout.addWidget(self.mass_btn, 0, 1)
 
         self.bias_btn = QtWidgets.QPushButton("Bias Forces")
+        self.bias_btn.setToolTip("Compute Coriolis, centrifugal, and gravity forces")
         self.bias_btn.clicked.connect(self.compute_bias_forces)
         compute_layout.addWidget(self.bias_btn, 0, 2)
 
         compute_frame_layout = QtWidgets.QHBoxLayout()
         self.frame_box = QtWidgets.QComboBox()
+        self.frame_box.setToolTip("Select a frame to compute Jacobian")
         self.jac_btn = QtWidgets.QPushButton("Compute Jacobian")
+        self.jac_btn.setToolTip("Compute the geometric Jacobian for the selected frame")
         self.jac_btn.clicked.connect(self.compute_jacobian)
         compute_frame_layout.addWidget(self.frame_box)
         compute_frame_layout.addWidget(self.jac_btn)
@@ -152,36 +158,29 @@ class PinocchioGUI(QtWidgets.QWidget):
         """Create sliders for joint control."""
         if self.model is None:
             return
-        # Clear old sliders and other widgets
-        if self.slider_layout is not None:
-            while self.slider_layout.count():
-                item = self.slider_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
 
+        # Clear old rows (sliders + labels)
+        for row in self.joint_rows:
+            row.deleteLater()
+
+        self.joint_rows = []
         self.joint_sliders = []
-        self.joint_value_labels = []
         self.joint_names = []
 
-        # We don't need to replace the layout object if we cleared it,
-        # but replacing it is safer to ensure clean state.
-        if self.slider_layout:
-            self.slider_layout.setParent(None)
-
-        self.slider_layout = QtWidgets.QVBoxLayout()
-        self.slider_container.setLayout(self.slider_layout)
+        # Note: We don't need to recreate self.slider_layout, just clear it
+        # But since we delete widgets, they remove themselves from layout.
 
         for jn in self.model.names[1:]:
             self.joint_names.append(jn)
 
-            # Row container
+            # Container for the row
             row_widget = QtWidgets.QWidget()
             row_layout = QtWidgets.QHBoxLayout(row_widget)
             row_layout.setContentsMargins(0, 0, 0, 0)
 
-            # Name label
-            name_label = QtWidgets.QLabel(jn)
-            name_label.setFixedWidth(120)  # Fixed width for alignment
+            # Label Name
+            label = QtWidgets.QLabel(jn)
+            label.setFixedWidth(120)  # Give enough space for long joint names
 
             # Slider
             slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
@@ -189,38 +188,48 @@ class PinocchioGUI(QtWidgets.QWidget):
             slider.setMaximum(314)
             slider.setValue(0)
             slider.setSingleStep(1)
-            slider.valueChanged.connect(self.update_viewer_joints)
 
-            # Set buddy for accessibility (clicking label focuses slider)
-            name_label.setBuddy(slider)
-
-            # Value label
+            # Value Display
             val_label = QtWidgets.QLabel("0.00")
-            val_label.setFixedWidth(40)
+            val_label.setFixedWidth(50)
             val_label.setAlignment(
                 QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
             )
 
-            row_layout.addWidget(name_label)
+            # Connect slider
+            # Use default argument to capture specific label instance
+            slider.valueChanged.connect(
+                lambda val, vl=val_label: self.on_slider_change(val, vl)
+            )
+
+            row_layout.addWidget(label)
             row_layout.addWidget(slider)
             row_layout.addWidget(val_label)
 
             self.slider_layout.addWidget(row_widget)
 
             self.joint_sliders.append(slider)
-            self.joint_value_labels.append(val_label)
+            self.joint_rows.append(row_widget)
+
+    def on_slider_change(self, val: int, label: QtWidgets.QLabel) -> None:
+        """Handle slider value change.
+
+        Args:
+            val: The integer value from slider (-314 to 314)
+            label: The label widget to update
+        """
+        # Update text
+        rad = val / 100.0
+        label.setText(f"{rad:.2f}")
+
+        # Update viewer
+        self.update_viewer_joints()
 
     def update_viewer_joints(self) -> None:
         """Update viewer with current joint positions."""
         if self.model is None or self.data is None:
             return
         q = self.get_joint_state()
-
-        # Update value labels
-        for i, val in enumerate(q):
-            if i < len(self.joint_value_labels):
-                self.joint_value_labels[i].setText(f"{val:.2f}")
-
         self.viewer["robot"].set_joint_positions(q)
         self.viewer["overlay/joint_axes"].delete()
 
@@ -246,7 +255,7 @@ class PinocchioGUI(QtWidgets.QWidget):
     def compute_fk(self) -> None:
         """Compute forward kinematics."""
         if self.model is None or self.data is None:
-            self.log_write("Please load a URDF file first.")
+            self.log_write("Please load a URDF model first.")
             return
         q = self.get_joint_state()
         pin.forwardKinematics(self.model, self.data, np.array(q))
@@ -260,7 +269,7 @@ class PinocchioGUI(QtWidgets.QWidget):
     def compute_mass_matrix(self) -> None:
         """Compute mass matrix."""
         if self.model is None or self.data is None:
-            self.log_write("Please load a URDF file first.")
+            self.log_write("Please load a URDF model first.")
             return
         q = self.get_joint_state()
         m_matrix = pin.crba(self.model, self.data, np.array(q))
@@ -288,7 +297,7 @@ class PinocchioGUI(QtWidgets.QWidget):
     def compute_jacobian(self) -> None:
         """Compute Jacobian for selected frame."""
         if self.model is None or self.data is None:
-            self.log_write("No model loaded. Please load a URDF file.")
+            self.log_write("Please load a URDF model first.")
             return
         frame_name = self.frame_box.currentText()
         frame_id = self.model.getFrameId(frame_name)
