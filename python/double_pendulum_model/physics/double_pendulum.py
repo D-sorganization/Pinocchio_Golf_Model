@@ -67,7 +67,6 @@ class ExpressionFunction:
         ast.UAdd,
         ast.Call,
         ast.Constant,
-        ast.Attribute,
         ast.BitXor,
     }
 
@@ -125,13 +124,10 @@ class ExpressionFunction:
                 msg = f"Use of unknown variable '{child.id}' in expression"
                 raise ValueError(msg)
             if isinstance(child, ast.Call):
-                if not isinstance(child.func, ast.Name | ast.Attribute):
+                if not isinstance(child.func, ast.Name):
                     msg = "Only direct function calls are permitted"
                     raise ValueError(msg)  # noqa: TRY004
-                if (
-                    isinstance(child.func, ast.Name)
-                    and child.func.id not in self._ALLOWED_NAMES
-                ):
+                if child.func.id not in self._ALLOWED_NAMES:
                     msg = f"Function '{child.func.id}' is not permitted"
                     raise ValueError(msg)
 
@@ -345,7 +341,7 @@ class DoublePendulumDynamics:
         c1, c2 = self.coriolis_vector(state.theta2, state.omega1, state.omega2)
         g1, g2 = self.gravity_vector(state.theta1, state.theta2)
         d1, d2 = self.damping_vector(state.omega1, state.omega2)
-        mass, inv_m = self._invert_mass_matrix(state.theta2)
+        _, inv_m = self._invert_mass_matrix(state.theta2)
 
         drift_acc1 = -(inv_m[0][0] * (c1 + g1 + d1) + inv_m[0][1] * (c2 + g2 + d2))
         drift_acc2 = -(inv_m[1][0] * (c1 + g1 + d1) + inv_m[1][1] * (c2 + g2 + d2))
