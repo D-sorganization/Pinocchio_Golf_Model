@@ -280,18 +280,16 @@ class DoublePendulumDynamics:
 
     def mass_matrix(self, theta2: float) -> Matrix2x2:
         p = self.parameters
-        m1 = p.upper_segment.mass_kg
         m2 = p.lower_segment.total_mass
         l1 = p.upper_segment.length_m
-        lc1 = p.upper_segment.center_of_mass_distance
         lc2 = p.lower_segment.center_of_mass_distance
         i1 = p.upper_segment.inertia_about_proximal_joint
         i2 = p.lower_segment.inertia_about_proximal_joint
         cos_theta2 = math.cos(theta2)
 
-        m11 = i1 + i2 + m1 * lc1**2 + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos_theta2)
-        m12 = i2 + m2 * (lc2**2 + l1 * lc2 * cos_theta2)
-        m22 = i2 + m2 * lc2**2
+        m11 = i1 + i2 + m2 * l1**2 + 2 * m2 * l1 * lc2 * cos_theta2
+        m12 = i2 + m2 * l1 * lc2 * cos_theta2
+        m22 = i2
         return ((m11, m12), (m12, m22))
 
     def coriolis_vector(
@@ -304,7 +302,7 @@ class DoublePendulumDynamics:
         sin_theta2 = math.sin(theta2)
         h = -m2 * l1 * lc2 * sin_theta2
         c1 = h * (2 * omega1 * omega2 + omega2**2)
-        c2 = h * omega1**2
+        c2 = -h * omega1**2
         return c1, c2
 
     def gravity_vector(self, theta1: float, theta2: float) -> tuple[float, float]:
@@ -345,7 +343,7 @@ class DoublePendulumDynamics:
         c1, c2 = self.coriolis_vector(state.theta2, state.omega1, state.omega2)
         g1, g2 = self.gravity_vector(state.theta1, state.theta2)
         d1, d2 = self.damping_vector(state.omega1, state.omega2)
-        mass, inv_m = self._invert_mass_matrix(state.theta2)
+        _, inv_m = self._invert_mass_matrix(state.theta2)
 
         drift_acc1 = -(inv_m[0][0] * (c1 + g1 + d1) + inv_m[0][1] * (c2 + g2 + d2))
         drift_acc2 = -(inv_m[1][0] * (c1 + g1 + d1) + inv_m[1][1] * (c2 + g2 + d2))
