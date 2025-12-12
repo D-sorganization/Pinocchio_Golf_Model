@@ -13,7 +13,7 @@ except ImportError:
 class HelperPinocchioBackend(PinocchioBackend):  # type: ignore[misc, no-any-unimported]
     """Subclass to allow initialization with an existing model."""
 
-    def __init__(self, model: typing.Any) -> None:
+    def __init__(self, model: typing.Any) -> None:  # noqa: ANN401
         # Skip super().__init__ which requires a file
         self.model = model
         self.data = model.createData()
