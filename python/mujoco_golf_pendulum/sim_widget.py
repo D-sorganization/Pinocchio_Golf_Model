@@ -180,7 +180,6 @@ class MuJoCoSimWidget(QtWidgets.QWidget):
             xml_path: Path to the XML model file (absolute or relative to project root)
         """
 
-
         # Convert to absolute path if needed
         if not Path(xml_path).is_absolute():
             project_root = Path(__file__).parent.parent.parent

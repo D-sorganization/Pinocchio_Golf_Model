@@ -11,10 +11,11 @@ from collections.abc import Callable
 from enum import Enum
 
 import numpy as np
+
 try:
     import cv2
 except ImportError:
-    cv2 = None
+    cv2 = None  # type: ignore[assignment]
 
 
 class PlaybackMode(Enum):

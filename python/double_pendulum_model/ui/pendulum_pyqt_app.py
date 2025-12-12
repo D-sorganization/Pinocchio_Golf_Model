@@ -329,7 +329,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
         self, state: DoublePendulumState
     ) -> np.ndarray[typing.Any, typing.Any]:
 
-
         plane_rotation = self._plane_rotation(self.double_params.plane_inclination_deg)
         shoulder = np.array([0.0, 0.0, 0.0])
         upper = self._point_from_angles(
@@ -345,7 +344,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _points_triple(
         self, state: TriplePendulumState
     ) -> np.ndarray[typing.Any, typing.Any]:
-
 
         shoulder = np.array([0.0, 0.0, 0.0])
         params = self.triple_params.segments
@@ -365,7 +363,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
         self, angle: float, rotation: np.ndarray[typing.Any, typing.Any], length: float
     ) -> np.ndarray[typing.Any, typing.Any]:
 
-
         local = np.array(
             [
                 length * math.sin(angle),
@@ -378,7 +375,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _plane_rotation(
         self, inclination_deg: float
     ) -> np.ndarray[typing.Any, typing.Any]:
-
 
         inclination_rad = math.radians(inclination_deg)
         cos_inc = math.cos(inclination_rad)

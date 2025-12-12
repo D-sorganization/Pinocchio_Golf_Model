@@ -360,7 +360,6 @@ def export_recording_all_formats(
         Dictionary mapping format to success status
     """
 
-
     if formats is None:
         formats = ["json", "csv", "mat", "hdf5"]
     base_path_obj = Path(base_path)

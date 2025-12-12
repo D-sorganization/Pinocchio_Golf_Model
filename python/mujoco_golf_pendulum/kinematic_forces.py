@@ -623,7 +623,6 @@ def export_kinematic_forces_to_csv(
         filepath: Output CSV file path
     """
 
-
     with open(filepath, "w", newline="") as f:
         writer = csv.writer(f)
 

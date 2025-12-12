@@ -476,7 +476,6 @@ def export_inverse_dynamics_to_csv(
         filepath: Output CSV path
     """
 
-
     with open(filepath, "w", newline="") as f:
         writer = csv.writer(f)
 

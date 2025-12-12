@@ -469,7 +469,6 @@ def run_all_examples() -> None:
             example_func()
         except Exception:
 
-
             traceback.print_exc()
 
 

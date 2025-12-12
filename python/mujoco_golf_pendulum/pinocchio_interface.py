@@ -124,7 +124,6 @@ class PinocchioWrapper:
             Tuple of (pin_model, pin_data)
         """
 
-
         # Export to temporary URDF file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".urdf", delete=False) as f:
             urdf_path = Path(f.name)

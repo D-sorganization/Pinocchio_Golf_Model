@@ -315,7 +315,6 @@ def run_all_examples() -> None:
             example_func()
         except Exception:  # - Example runner should continue on any error
 
-
             traceback.print_exc()
 
 

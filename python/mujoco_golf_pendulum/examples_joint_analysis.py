@@ -222,7 +222,6 @@ def example_interactive_universal_joint() -> None:
 def main() -> None:
     """Run all examples."""
 
-
     os.makedirs("output", exist_ok=True)
 
     # Run examples

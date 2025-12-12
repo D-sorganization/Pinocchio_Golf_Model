@@ -2453,7 +2453,6 @@ class AdvancedGolfAnalysisWindow(QtWidgets.QMainWindow):
 
         # Add all bodies
 
-
         for body_id in range(1, self.sim_widget.model.nbody):  # Skip world (0)
             body_name = mujoco.mj_id2name(
                 self.sim_widget.model,
@@ -2487,7 +2486,6 @@ class AdvancedGolfAnalysisWindow(QtWidgets.QMainWindow):
 
     def on_add_constraint(self) -> None:
         """Add a constraint to the selected body."""
-
 
         manipulator = self.sim_widget.get_manipulator()
         if not manipulator:
