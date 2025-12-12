@@ -15,7 +15,11 @@ import numpy as np
 try:
     import cv2
 except ImportError:
+<<<<<<< HEAD
     cv2 = None
+=======
+    cv2 = None  # type: ignore[assignment]
+>>>>>>> origin/main
 
 
 class PlaybackMode(Enum):
@@ -260,7 +264,7 @@ class PlaybackController:
             render_callback: Function that takes (state, control) and returns RGB image
         """
         if cv2 is None:
-            msg = "OpenCV is required for image export"
+            msg = "OpenCV is required to export images"
             raise ImportError(msg)
 
         frame = max(0, min(frame, self.num_frames - 1))

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
+import numpy as np  # noqa: TID253
 import logging
 import math
 from dataclasses import dataclass
 import typing
 
 
-
-if typing.TYPE_CHECKING:
-    import numpy as np
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -331,7 +329,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _points_double(
         self, state: DoublePendulumState
     ) -> np.ndarray[typing.Any, typing.Any]:
-        import numpy as np
 
         plane_rotation = self._plane_rotation(self.double_params.plane_inclination_deg)
         shoulder = np.array([0.0, 0.0, 0.0])
@@ -348,7 +345,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _points_triple(
         self, state: TriplePendulumState
     ) -> np.ndarray[typing.Any, typing.Any]:
-        import numpy as np
 
         shoulder = np.array([0.0, 0.0, 0.0])
         params = self.triple_params.segments
@@ -367,7 +363,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _point_from_angles(
         self, angle: float, rotation: np.ndarray[typing.Any, typing.Any], length: float
     ) -> np.ndarray[typing.Any, typing.Any]:
-        import numpy as np
 
         local = np.array(
             [
@@ -381,7 +376,6 @@ class PendulumController(QtWidgets.QWidget):  # type: ignore[misc]
     def _plane_rotation(
         self, inclination_deg: float
     ) -> np.ndarray[typing.Any, typing.Any]:
-        import numpy as np
 
         inclination_rad = math.radians(inclination_deg)
         cos_inc = math.cos(inclination_rad)

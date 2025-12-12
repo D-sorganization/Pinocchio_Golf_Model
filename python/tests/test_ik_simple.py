@@ -1,11 +1,13 @@
 """Simple verification test for PinkSolver."""
 
 import logging
+
 import numpy as np
 
 import pytest
 
 pin = pytest.importorskip("pinocchio")
+logger = logging.getLogger(__name__)
 
 try:
     from dtack.ik.pink_solver import PinkSolver

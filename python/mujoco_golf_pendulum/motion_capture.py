@@ -477,8 +477,7 @@ class MotionCaptureProcessor:
         Returns:
             Filtered positions [N x 3] or [N x nv]
         """
-        if len(positions) == 0:
-            return positions
+
 
         # Design filter
         nyquist = sampling_rate / 2.0

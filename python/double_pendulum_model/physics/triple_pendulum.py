@@ -126,13 +126,13 @@ def _symbolic_triple_functions() -> tuple[  # noqa: PLR0915
     phi3 = theta1 + theta2 + theta3
 
     x1 = lc1 * sp.sin(phi1)
-    y1 = lc1 * sp.cos(phi1)
+    y1 = -lc1 * sp.cos(phi1)
 
     x2 = l1 * sp.sin(phi1) + lc2 * sp.sin(phi2)
-    y2 = l1 * sp.cos(phi1) + lc2 * sp.cos(phi2)
+    y2 = -l1 * sp.cos(phi1) - lc2 * sp.cos(phi2)
 
     x3 = l1 * sp.sin(phi1) + l2 * sp.sin(phi2) + lc3 * sp.sin(phi3)
-    y3 = l1 * sp.cos(phi1) + l2 * sp.cos(phi2) + lc3 * sp.cos(phi3)
+    y3 = -l1 * sp.cos(phi1) - l2 * sp.cos(phi2) - lc3 * sp.cos(phi3)
 
     vx1 = sp.diff(x1, theta1) * omega1
     vy1 = sp.diff(y1, theta1) * omega1
@@ -290,7 +290,9 @@ class TriplePendulumDynamics:
         mass = self.mass_matrix(state)
         bias = self.bias_vector(state)
         torques = mass @ np.array(accelerations, dtype=float) + bias
-        return typing.cast("tuple[float, float, float]", tuple(float(t) for t in torques))
+        return typing.cast(
+            "tuple[float, float, float]", tuple(float(t) for t in torques)
+        )
 
     def joint_torque_breakdown(
         self, state: TriplePendulumState, control: tuple[float, float, float]
@@ -316,7 +318,8 @@ class TriplePendulumDynamics:
         return TripleJointTorques(
             applied=control,
             gravitational=typing.cast(
-                "tuple[float, float, float]", tuple(float(c) for c in gravity_components)
+                "tuple[float, float, float]",
+                tuple(float(c) for c in gravity_components),
             ),
             damping=typing.cast("tuple[float, float, float]", damping_components),
             coriolis_centripetal=typing.cast(

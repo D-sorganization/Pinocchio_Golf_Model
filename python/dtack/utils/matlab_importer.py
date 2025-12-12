@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from dtack.utils.gears_parser import GearsParser
 
 import typing
 

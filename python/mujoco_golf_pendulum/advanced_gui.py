@@ -2453,7 +2453,7 @@ class AdvancedGolfAnalysisWindow(QtWidgets.QMainWindow):
         self.ref_body_combo.clear()
 
         # Add all bodies
-        # Add all bodies
+
 
         for body_id in range(1, self.sim_widget.model.nbody):  # Skip world (0)
             body_name = mujoco.mj_id2name(

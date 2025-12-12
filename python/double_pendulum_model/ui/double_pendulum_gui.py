@@ -21,6 +21,7 @@ import math
 import tkinter as tk
 
 
+
 from dataclasses import dataclass
 import typing
 from datetime import datetime, timezone
@@ -526,9 +527,7 @@ class DoublePendulumApp:
         if self.data_file_handle is not None:
             return
 
-        timestamp = datetime.now(timezone.utc).strftime(  # noqa: UP017
-            "%Y%m%d_%H%M%S"
-        )
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")  # noqa: UP017
         filename = f"pendulum_data_{timestamp}.csv"
         self.data_file_stack = contextlib.ExitStack()
         self.data_file_handle = self.data_file_stack.enter_context(

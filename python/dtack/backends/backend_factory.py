@@ -45,16 +45,10 @@ class BackendFactory:
         backend_str = str(backend_type).lower()
 
         if backend_str == BackendType.PINOCCHIO:
-
-
             return PinocchioBackend(model_path)
         if backend_str == BackendType.MUJOCO:
-
-
             return MuJoCoBackend(model_path)
         if backend_str == BackendType.PINK:
-
-
             return PINKBackend(model_path)
 
         msg = f"Unsupported backend type: {backend_type}"
