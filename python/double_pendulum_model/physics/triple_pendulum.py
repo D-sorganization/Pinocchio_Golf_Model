@@ -1,14 +1,13 @@
+# ruff: noqa: PLR0913, ARG001, N803, TID253
 from __future__ import annotations
 
-import functools
 import typing
 from dataclasses import dataclass
 
+import numpy as np
+
 if typing.TYPE_CHECKING:
     import collections.abc
-    import numpy as np
-
-import sympy as sp
 
 GRAVITATIONAL_ACCELERATION = 9.80665
 DAMPING_DEFAULT = (0.35, 0.3, 0.25)
@@ -89,146 +88,209 @@ class PolynomialProfile:
     coefficients: tuple[float, ...]
 
     def omega(self, t: float) -> float:
-        import numpy as np
-
         poly = np.poly1d(self.coefficients)
         return float(poly(t))
 
     def alpha(self, t: float) -> float:
-        import numpy as np
-
         derivative = np.polyder(self.coefficients)
         return float(np.poly1d(derivative)(t))
 
 
-@functools.lru_cache(maxsize=1)
-def _symbolic_triple_functions() -> tuple[  # noqa: PLR0915
+def _calc_mass_matrix(
+    theta1: float,
+    theta2: float,
+    theta3: float,
+    omega1: float,
+    omega2: float,
+    omega3: float,
+    l1: float,
+    l2: float,
+    l3: float,
+    lc1: float,
+    lc2: float,
+    lc3: float,
+    m1: float,
+    m2: float,
+    m3: float,
+    I1: float,
+    I2: float,
+    I3: float,
+    g: float,
+) -> np.ndarray:
+    mass = np.zeros((3, 3))
+    mass[0, 0] = (
+        I1
+        + I2
+        + I3
+        + lc1**2 * m1
+        + m2 * (l1**2 + 2 * l1 * lc2 * np.cos(theta2) + lc2**2)
+        + m3
+        * (
+            l1**2
+            + 2 * l1 * l2 * np.cos(theta2)
+            + 2 * l1 * lc3 * np.cos(theta2 + theta3)
+            + l2**2
+            + 2 * l2 * lc3 * np.cos(theta3)
+            + lc3**2
+        )
+    )
+    mass[0, 1] = (
+        I2
+        + I3
+        + lc2 * m2 * (l1 * np.cos(theta2) + lc2)
+        + m3
+        * (
+            l1 * l2 * np.cos(theta2)
+            + l1 * lc3 * np.cos(theta2 + theta3)
+            + l2**2
+            + 2 * l2 * lc3 * np.cos(theta3)
+            + lc3**2
+        )
+    )
+    mass[0, 2] = I3 + lc3 * m3 * (
+        l1 * np.cos(theta2 + theta3) + l2 * np.cos(theta3) + lc3
+    )
+    mass[1, 0] = (
+        I2
+        + I3
+        + lc2 * m2 * (l1 * np.cos(theta2) + lc2)
+        + m3
+        * (
+            l1 * l2 * np.cos(theta2)
+            + l1 * lc3 * np.cos(theta2 + theta3)
+            + l2**2
+            + 2 * l2 * lc3 * np.cos(theta3)
+            + lc3**2
+        )
+    )
+    mass[1, 1] = (
+        I2 + I3 + lc2**2 * m2 + m3 * (l2**2 + 2 * l2 * lc3 * np.cos(theta3) + lc3**2)
+    )
+    mass[1, 2] = I3 + lc3 * m3 * (l2 * np.cos(theta3) + lc3)
+    mass[2, 0] = I3 + lc3 * m3 * (
+        l1 * np.cos(theta2 + theta3) + l2 * np.cos(theta3) + lc3
+    )
+    mass[2, 1] = I3 + lc3 * m3 * (l2 * np.cos(theta3) + lc3)
+    mass[2, 2] = I3 + lc3**2 * m3
+    return mass
+
+
+def _calc_bias_vector(
+    theta1: float,
+    theta2: float,
+    theta3: float,
+    omega1: float,
+    omega2: float,
+    omega3: float,
+    l1: float,
+    l2: float,
+    l3: float,
+    lc1: float,
+    lc2: float,
+    lc3: float,
+    m1: float,
+    m2: float,
+    m3: float,
+    I1: float,
+    I2: float,
+    I3: float,
+    g: float,
+) -> np.ndarray:
+    bias = np.zeros((3,))
+    bias[0] = (
+        g * l1 * m2 * np.sin(theta1)
+        + g * l1 * m3 * np.sin(theta1)
+        + g * l2 * m3 * np.sin(theta1 + theta2)
+        + g * lc1 * m1 * np.sin(theta1)
+        + g * lc2 * m2 * np.sin(theta1 + theta2)
+        + g * lc3 * m3 * np.sin(theta1 + theta2 + theta3)
+        - 2 * l1 * l2 * m3 * omega1 * omega2 * np.sin(theta2)
+        - l1 * l2 * m3 * omega2**2 * np.sin(theta2)
+        - 2 * l1 * lc2 * m2 * omega1 * omega2 * np.sin(theta2)
+        - l1 * lc2 * m2 * omega2**2 * np.sin(theta2)
+        - 2 * l1 * lc3 * m3 * omega1 * omega2 * np.sin(theta2 + theta3)
+        - 2 * l1 * lc3 * m3 * omega1 * omega3 * np.sin(theta2 + theta3)
+        - l1 * lc3 * m3 * omega2**2 * np.sin(theta2 + theta3)
+        - 2 * l1 * lc3 * m3 * omega2 * omega3 * np.sin(theta2 + theta3)
+        - l1 * lc3 * m3 * omega3**2 * np.sin(theta2 + theta3)
+        - 2 * l2 * lc3 * m3 * omega1 * omega3 * np.sin(theta3)
+        - 2 * l2 * lc3 * m3 * omega2 * omega3 * np.sin(theta3)
+        - l2 * lc3 * m3 * omega3**2 * np.sin(theta3)
+    )
+    bias[1] = (
+        g * l2 * m3 * np.sin(theta1 + theta2)
+        + g * lc2 * m2 * np.sin(theta1 + theta2)
+        + g * lc3 * m3 * np.sin(theta1 + theta2 + theta3)
+        + l1 * l2 * m3 * omega1**2 * np.sin(theta2)
+        + l1 * lc2 * m2 * omega1**2 * np.sin(theta2)
+        + l1 * lc3 * m3 * omega1**2 * np.sin(theta2 + theta3)
+        - 2 * l2 * lc3 * m3 * omega1 * omega3 * np.sin(theta3)
+        - 2 * l2 * lc3 * m3 * omega2 * omega3 * np.sin(theta3)
+        - l2 * lc3 * m3 * omega3**2 * np.sin(theta3)
+    )
+    bias[2] = (
+        lc3
+        * m3
+        * (
+            g * np.sin(theta1 + theta2 + theta3)
+            + l1 * omega1**2 * np.sin(theta2 + theta3)
+            + l2 * omega1**2 * np.sin(theta3)
+            + 2 * l2 * omega1 * omega2 * np.sin(theta3)
+            + l2 * omega2**2 * np.sin(theta3)
+        )
+    )
+    return bias
+
+
+def _calc_gravity_vector(
+    theta1: float,
+    theta2: float,
+    theta3: float,
+    l1: float,
+    l2: float,
+    l3: float,
+    lc1: float,
+    lc2: float,
+    lc3: float,
+    m1: float,
+    m2: float,
+    m3: float,
+    I1: float,
+    I2: float,
+    I3: float,
+    g: float,
+) -> np.ndarray:
+    gravity = np.zeros((3,))
+    gravity[0] = (
+        g * l1 * m2 * np.sin(theta1)
+        + g * l1 * m3 * np.sin(theta1)
+        + g * l2 * m3 * np.sin(theta1 + theta2)
+        + g * lc1 * m1 * np.sin(theta1)
+        + g * lc2 * m2 * np.sin(theta1 + theta2)
+        + g * lc3 * m3 * np.sin(theta1 + theta2 + theta3)
+    )
+    gravity[1] = (
+        g * l2 * m3 * np.sin(theta1 + theta2)
+        + g * lc2 * m2 * np.sin(theta1 + theta2)
+        + g * lc3 * m3 * np.sin(theta1 + theta2 + theta3)
+    )
+    gravity[2] = g * lc3 * m3 * np.sin(theta1 + theta2 + theta3)
+    return gravity
+
+
+def _hardcoded_triple_functions() -> tuple[
     collections.abc.Callable[..., np.ndarray],
     collections.abc.Callable[..., np.ndarray],
     collections.abc.Callable[..., np.ndarray],
 ]:
-    theta1, theta2, theta3 = sp.symbols("theta1 theta2 theta3")
-    omega1, omega2, omega3 = sp.symbols("omega1 omega2 omega3")
-    alpha1, alpha2, alpha3 = sp.symbols("alpha1 alpha2 alpha3")
-
-    l1, l2, l3 = sp.symbols("l1 l2 l3")
-    lc1, lc2, lc3 = sp.symbols("lc1 lc2 lc3")
-    m1, m2, m3 = sp.symbols("m1 m2 m3")
-    i1_sym, i2_sym, i3_sym = sp.symbols("I1 I2 I3")
-    g = sp.symbols("g")
-
-    q = sp.Matrix([theta1, theta2, theta3])
-    qd = sp.Matrix([omega1, omega2, omega3])
-    qdd = sp.Matrix([alpha1, alpha2, alpha3])
-
-    phi1 = theta1
-    phi2 = theta1 + theta2
-    phi3 = theta1 + theta2 + theta3
-
-    x1 = lc1 * sp.sin(phi1)
-    y1 = -lc1 * sp.cos(phi1)
-
-    x2 = l1 * sp.sin(phi1) + lc2 * sp.sin(phi2)
-    y2 = -l1 * sp.cos(phi1) - lc2 * sp.cos(phi2)
-
-    x3 = l1 * sp.sin(phi1) + l2 * sp.sin(phi2) + lc3 * sp.sin(phi3)
-    y3 = -l1 * sp.cos(phi1) - l2 * sp.cos(phi2) - lc3 * sp.cos(phi3)
-
-    vx1 = sp.diff(x1, theta1) * omega1
-    vy1 = sp.diff(y1, theta1) * omega1
-
-    vx2 = x2.diff(theta1) * omega1 + x2.diff(theta2) * omega2
-    vy2 = y2.diff(theta1) * omega1 + y2.diff(theta2) * omega2
-
-    vx3 = x3.diff(theta1) * omega1 + x3.diff(theta2) * omega2 + x3.diff(theta3) * omega3
-    vy3 = y3.diff(theta1) * omega1 + y3.diff(theta2) * omega2 + y3.diff(theta3) * omega3
-
-    kinetic_energy = (
-        sp.Rational(1, 2) * m1 * (vx1**2 + vy1**2)
-        + sp.Rational(1, 2) * i1_sym * omega1**2
-        + sp.Rational(1, 2) * m2 * (vx2**2 + vy2**2)
-        + sp.Rational(1, 2) * i2_sym * (omega1 + omega2) ** 2
-        + sp.Rational(1, 2) * m3 * (vx3**2 + vy3**2)
-        + sp.Rational(1, 2) * i3_sym * (omega1 + omega2 + omega3) ** 2
-    )
-
-    potential_energy = m1 * g * y1 + m2 * g * y2 + m3 * g * y3
-    lagrangian = kinetic_energy - potential_energy
-
-    tau = []
-    for i in range(3):
-        generalized_velocity_term = sp.diff(lagrangian, qd[i])
-        time_derivative_term = (
-            sp.diff(generalized_velocity_term, theta1) * omega1
-            + sp.diff(generalized_velocity_term, theta2) * omega2
-            + sp.diff(generalized_velocity_term, theta3) * omega3
-        )
-        time_derivative_term += (
-            sp.diff(generalized_velocity_term, omega1) * qdd[0]
-            + sp.diff(generalized_velocity_term, omega2) * qdd[1]
-            + sp.diff(generalized_velocity_term, omega3) * qdd[2]
-        )
-        generalized_coordinate_term = sp.diff(lagrangian, q[i])
-        tau.append(time_derivative_term - generalized_coordinate_term)
-
-    tau_vec = sp.Matrix(tau)
-    mass_matrix_sym = tau_vec.jacobian(qdd)
-    bias = sp.simplify(tau_vec.subs({alpha1: 0, alpha2: 0, alpha3: 0}))
-
-    symbols = (
-        theta1,
-        theta2,
-        theta3,
-        omega1,
-        omega2,
-        omega3,
-        l1,
-        l2,
-        l3,
-        lc1,
-        lc2,
-        lc3,
-        m1,
-        m2,
-        m3,
-        i1_sym,
-        i2_sym,
-        i3_sym,
-        g,
-    )
-
-    mass_func = sp.lambdify(symbols[:6] + symbols[6:], mass_matrix_sym, "numpy")
-    bias_func = sp.lambdify(symbols[:6] + symbols[6:], bias, "numpy")
-    gravity_func = sp.lambdify(
-        (
-            theta1,
-            theta2,
-            theta3,
-            l1,
-            l2,
-            l3,
-            lc1,
-            lc2,
-            lc3,
-            m1,
-            m2,
-            m3,
-            i1_sym,
-            i2_sym,
-            i3_sym,
-            g,
-        ),
-        bias.subs({omega1: 0, omega2: 0, omega3: 0}),
-        "numpy",
-    )
-    return mass_func, bias_func, gravity_func
+    return _calc_mass_matrix, _calc_bias_vector, _calc_gravity_vector
 
 
 class TriplePendulumDynamics:
     def __init__(self, parameters: TriplePendulumParameters | None = None) -> None:
         self.parameters = parameters or TriplePendulumParameters.default()
         self._mass_func, self._bias_func, self._gravity_func = (
-            _symbolic_triple_functions()
+            _hardcoded_triple_functions()
         )
 
     def _parameter_vector(self) -> tuple[float, ...]:
@@ -250,8 +312,6 @@ class TriplePendulumDynamics:
         )
 
     def mass_matrix(self, state: TriplePendulumState) -> np.ndarray:
-        import numpy as np
-
         params = self._parameter_vector()
         theta = (state.theta1, state.theta2, state.theta3)
         omega = (state.omega1, state.omega2, state.omega3)
@@ -259,8 +319,6 @@ class TriplePendulumDynamics:
         return np.array(mass, dtype=float)
 
     def bias_vector(self, state: TriplePendulumState) -> np.ndarray:
-        import numpy as np
-
         params = self._parameter_vector()
         theta = (state.theta1, state.theta2, state.theta3)
         omega = (state.omega1, state.omega2, state.omega3)
@@ -273,8 +331,6 @@ class TriplePendulumDynamics:
     def forward_dynamics(
         self, state: TriplePendulumState, control: tuple[float, float, float]
     ) -> tuple[float, float, float]:
-        import numpy as np
-
         mass = self.mass_matrix(state)
         bias = self.bias_vector(state)
         accelerations = np.linalg.solve(mass, np.array(control, dtype=float) - bias)
@@ -285,8 +341,6 @@ class TriplePendulumDynamics:
     def inverse_dynamics(
         self, state: TriplePendulumState, accelerations: tuple[float, float, float]
     ) -> tuple[float, float, float]:
-        import numpy as np
-
         mass = self.mass_matrix(state)
         bias = self.bias_vector(state)
         torques = mass @ np.array(accelerations, dtype=float) + bias
@@ -297,8 +351,6 @@ class TriplePendulumDynamics:
     def joint_torque_breakdown(
         self, state: TriplePendulumState, control: tuple[float, float, float]
     ) -> TripleJointTorques:
-        import numpy as np
-
         theta = (state.theta1, state.theta2, state.theta3)
         params = self._parameter_vector()
         gravity_components = np.array(

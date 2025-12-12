@@ -5,3 +5,7 @@
 ## 2025-12-10 - [Pinocchio Backend Bias Forces Bug & Optimization]
 **Learning:** The previous implementation of `compute_bias_forces` in `PinocchioBackend` relied on `pin.rnea` updating `self.data.nle` as a side effect, which it does NOT do. This meant the function was returning uninitialized data (zeros). Additionally, it was allocating `np.zeros` unnecessarily.
 **Action:** Use `pin.nle(model, data, q, v)` directly. It is faster (no allocation, no redundant gravity call) and CORRECT (updates and returns the actual NLE vector). Always verify what side effects C++ bindings actually have.
+
+## 2025-12-12 - [Runtime Symbolic Derivation Bottleneck]
+**Learning:** `TriplePendulumDynamics` was performing symbolic derivation (using SymPy) at runtime during initialization, taking ~12 seconds. Even with `lru_cache`, this blocked startup/testing significantly.
+**Action:** Generate the symbolic expressions offline and hardcode the resulting NumPy equations into the codebase. This reduces startup time from seconds to milliseconds and removes a heavy runtime dependency (`sympy`).
