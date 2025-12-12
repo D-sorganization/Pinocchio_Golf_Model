@@ -187,9 +187,11 @@ class PinocchioBackend:
         q_arr = np.asarray(q, dtype=np.float64)
         v_arr = np.asarray(v, dtype=np.float64)
 
-        pin.computeGeneralizedGravity(self.model, self.data, q_arr)
-        pin.rnea(self.model, self.data, q_arr, v_arr, np.zeros(self.model.nv))
-        return self.data.nle
+        # Optimization: Use pin.nle directly.
+        # This avoids:
+        # 1. Redundant computeGeneralizedGravity (rnea computes it internally)
+        # 2. Allocating np.zeros(self.model.nv) for 'a' in rnea
+        return pin.nle(self.model, self.data, q_arr, v_arr)
 
     def compute_frame_jacobian(
         self,
