@@ -55,8 +55,10 @@ class TriplePendulumParameters:
         seg3 = TripleSegmentProperties(
             length_m=1.0,
             mass_kg=0.35,
-            center_of_mass_ratio=0.43,
-            inertia_about_com=(1.0 / 12.0) * 0.35 * 1.0**2,
+            # Derived from Shaft(0.15kg, com=0.43) + Head(0.20kg, com=1.0)
+            center_of_mass_ratio=0.7557142857142858,
+            # Composite inertia of shaft + head
+            inertia_about_com=0.04034857142857143,
         )
         return cls((seg1, seg2, seg3))
 
