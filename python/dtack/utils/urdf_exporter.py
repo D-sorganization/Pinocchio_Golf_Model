@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import math
 from pathlib import Path
-from typing import Any
+import typing
 
 import yaml  # type: ignore[import-untyped]
 
@@ -74,8 +74,8 @@ class URDFExporter:
         lines.extend(self._generate_visual(root))
         lines.append("  </link>")
 
-        segments: list[dict[str, Any]] = self.spec.get("segments", [])
-        children: dict[str, list[dict[str, Any]]] = {}
+        segments: list[dict[str, typing.Any]] = self.spec.get("segments", [])
+        children: dict[str, list[dict[str, typing.Any]]] = {}
         for segment in segments:
             parent = segment.get("parent", root["name"])
             children.setdefault(parent, []).append(segment)
@@ -94,7 +94,7 @@ class URDFExporter:
         return "\n".join(lines)
 
     def _generate_segment_urdf(
-        self, segment: dict[str, Any], parent_name: str
+        self, segment: dict[str, typing.Any], parent_name: str
     ) -> list[str]:
         """Generate URDF for a segment.
 
@@ -153,15 +153,15 @@ class URDFExporter:
 
         return lines
 
-    def _generate_single_joint(
+    def _generate_single_joint(  # noqa: PLR0913
         self,
         parent_name: str,
         seg_name: str,
-        joint: dict[str, Any],
-        segment: dict[str, Any],
+        joint: dict[str, typing.Any],
+        segment: dict[str, typing.Any],
         *,
         joint_type: str = "revolute",
-        origin: dict[str, Any] | None = None,
+        origin: dict[str, typing.Any] | None = None,
     ) -> list[str]:
         """Generate URDF for a single revolute joint.
 
@@ -204,13 +204,13 @@ class URDFExporter:
 
         return lines
 
-    def _generate_universal_joint(
+    def _generate_universal_joint(  # noqa: PLR0913
         self,
         parent_name: str,
         seg_name: str,
-        joint: dict[str, Any],
-        segment: dict[str, Any],
-        joint_origin: dict[str, Any] | None,
+        joint: dict[str, typing.Any],
+        segment: dict[str, typing.Any],
+        joint_origin: dict[str, typing.Any] | None,
     ) -> list[str]:
         """Generate URDF for a universal joint (2 revolute joints).
 
@@ -277,13 +277,13 @@ class URDFExporter:
 
         return lines
 
-    def _generate_gimbal_joint(
+    def _generate_gimbal_joint(  # noqa: PLR0913
         self,
         parent_name: str,
         seg_name: str,
-        joint: dict[str, Any],
-        segment: dict[str, Any],
-        joint_origin: dict[str, Any] | None,
+        joint: dict[str, typing.Any],
+        segment: dict[str, typing.Any],
+        joint_origin: dict[str, typing.Any] | None,
     ) -> list[str]:
         """Generate URDF for a gimbal joint (3 revolute joints: Z, Y, X).
 
@@ -370,7 +370,7 @@ class URDFExporter:
 
         return lines
 
-    def _generate_inertial(self, body: dict[str, Any]) -> list[str]:
+    def _generate_inertial(self, body: dict[str, typing.Any]) -> list[str]:
         """Generate inertial properties.
 
         Args:
@@ -413,7 +413,7 @@ class URDFExporter:
         axis: list[float] | None,
         limits: list[float] | None = None,
         damping: float | None = None,
-        origin: dict[str, Any] | None = None,
+        origin: dict[str, typing.Any] | None = None,
     ) -> list[str]:
         """Generate URDF for a joint block."""
 
@@ -443,7 +443,7 @@ class URDFExporter:
         lines.append("  </joint>")
         return lines
 
-    def _generate_visual(self, body: dict[str, Any]) -> list[str]:
+    def _generate_visual(self, body: dict[str, typing.Any]) -> list[str]:
         """Generate visual geometry.
 
         Args:
@@ -456,10 +456,8 @@ class URDFExporter:
         geom_origin = body.get("geometry", {}).get("origin")
         origin_xyz, origin_rpy = self._parse_origin(geom_origin)
         lines.append(
-            (
-                f'      <origin xyz="{origin_xyz[0]} {origin_xyz[1]} {origin_xyz[2]}" '
-                f'rpy="{origin_rpy[0]} {origin_rpy[1]} {origin_rpy[2]}"/>'
-            )
+            f'      <origin xyz="{origin_xyz[0]} {origin_xyz[1]} {origin_xyz[2]}" '
+            f'rpy="{origin_rpy[0]} {origin_rpy[1]} {origin_rpy[2]}"/>'
         )
         geom = body.get("geometry", {})
         geom_type = geom.get("type", "box")
@@ -488,7 +486,7 @@ class URDFExporter:
         return lines
 
     def _parse_origin(
-        self, origin: dict[str, Any] | None
+        self, origin: dict[str, typing.Any] | None
     ) -> tuple[list[float], list[float]]:
         """Parse origin dictionaries into xyz and rpy lists."""
 

@@ -10,7 +10,7 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "python"))
 
-from dtack.utils.urdf_exporter import URDFExporter  # isort: skip
+from dtack.utils.urdf_exporter import URDFExporter  # isort: skip # noqa: E402
 
 
 class TestModelValidation:
