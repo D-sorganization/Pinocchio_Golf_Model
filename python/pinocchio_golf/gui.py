@@ -2,6 +2,7 @@
 
 import logging
 import sys
+import types
 from pathlib import Path
 
 import meshcat.geometry as g
@@ -39,6 +40,29 @@ COM_SPHERE_RADIUS = 0.02  # [m] Radius for Center of Mass visualization spheres
 COM_COLOR = 0xFFFF00  # Yellow color for COMs
 
 
+class SignalBlocker:
+    """Context manager to block signals for a set of widgets."""
+
+    def __init__(self, *widgets: QtWidgets.QWidget) -> None:
+        """Initialize with widgets to block."""
+        self.widgets = widgets
+
+    def __enter__(self) -> None:
+        """Block signals for all widgets."""
+        for w in self.widgets:
+            w.blockSignals(True)  # noqa: FBT003
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> None:
+        """Restore signals for all widgets."""
+        for w in self.widgets:
+            w.blockSignals(False)  # noqa: FBT003
+
+
 class PinocchioGUI(QtWidgets.QMainWindow):
     """Main GUI widget for Pinocchio robot visualization and computation."""
 
@@ -70,7 +94,6 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         # Setup UI
         self._setup_ui()
 
-        # Timer
         # Timer
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self._game_loop)
@@ -209,9 +232,10 @@ class PinocchioGUI(QtWidgets.QMainWindow):
 
         except (ValueError, RuntimeError) as e:
             self.log_write(f"Error loading URDF: {e}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             # Catch-all for unexpected errors
             self.log_write(f"Unexpected error loading URDF: {e}")
+            logger.exception("Unexpected error loading URDF")
 
     def _build_kinematic_controls(self) -> None:
         if self.model is None:
@@ -243,6 +267,11 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         if nq_joint != 1:
             # Multi-DOF joints (e.g., spherical) are not supported in the UI.
             # Such joints are intentionally skipped and will not appear in the kinematic controls.
+            msg = (
+                f"Skipping joint '{joint_name}' (index {i}): "
+                f"{nq_joint} DOFs not supported in kinematic controls."
+            )
+            self.log_write(msg)
             return
 
         self.joint_names.append(joint_name)
@@ -298,28 +327,21 @@ class PinocchioGUI(QtWidgets.QMainWindow):
                 slider = self.joint_sliders[slider_idx]
                 spin = self.joint_spinboxes[slider_idx]
 
-                slider.blockSignals(True)  # noqa: FBT003
-                spin.blockSignals(True)  # noqa: FBT003
-
-                slider.setValue(int(val * SLIDER_SCALE))
-                spin.setValue(val)
-
-                slider.blockSignals(False)  # noqa: FBT003
-                spin.blockSignals(False)  # noqa: FBT003
+                with SignalBlocker(slider, spin):
+                    slider.setValue(int(val * SLIDER_SCALE))
+                    spin.setValue(val)
 
                 slider_idx += 1
 
     def _on_slider(self, val: int, spin: QtWidgets.QDoubleSpinBox, idx: int) -> None:
         angle = val / SLIDER_SCALE
-        spin.blockSignals(True)  # noqa: FBT003
-        spin.setValue(angle)
-        spin.blockSignals(False)  # noqa: FBT003
+        with SignalBlocker(spin):
+            spin.setValue(angle)
         self._update_q(idx, angle)
 
     def _on_spin(self, val: float, slider: QtWidgets.QSlider, idx: int) -> None:
-        slider.blockSignals(True)  # noqa: FBT003
-        slider.setValue(int(val * SLIDER_SCALE))
-        slider.blockSignals(False)  # noqa: FBT003
+        with SignalBlocker(slider):
+            slider.setValue(int(val * SLIDER_SCALE))
         self._update_q(idx, val)
 
     def _update_q(self, idx: int, val: float) -> None:
@@ -424,13 +446,15 @@ class PinocchioGUI(QtWidgets.QMainWindow):
                 continue
 
             # Update transform
-            T = self.data.oMf[i]  # noqa: N806
-            # Convert Pinocchio SE3 (T) to a 4x4 homogeneous transformation matrix.
+            transform = self.data.oMf[i]
+            # Convert Pinocchio SE3 (transform) to a 4x4 homogeneous transformation matrix.
             # Pinocchio's SE3.homogeneous property returns a 4x4 matrix representing
             # the pose in the world frame. Meshcat's set_transform expects a 4x4
             # column-major matrix (compatible with this layout).
-            M = T.homogeneous  # noqa: N806
-            self.viewer[f"overlays/frames/{frame.name}"].set_transform(M)
+            homogeneous_matrix = transform.homogeneous
+            self.viewer[f"overlays/frames/{frame.name}"].set_transform(
+                homogeneous_matrix
+            )
 
     def _draw_coms(self) -> None:
         if self.model is None or self.data is None:
@@ -440,10 +464,10 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         for i in range(1, self.model.njoints):
             # Joint i. Associated body has inertia.
             inertia = self.model.inertias[i]
-            oMi = self.data.oMi[i]  # noqa: N806
+            joint_transform = self.data.oMi[i]
             # Compute world-frame COM for each body by transforming the local COM (inertia.lever)
-            # through the joint placement (oMi).
-            com_world = oMi.act(inertia.lever)
+            # through the joint placement (joint_transform).
+            com_world = joint_transform.act(inertia.lever)
 
             # Update Sphere Position
             self.viewer[f"overlays/coms/{self.model.names[i]}"].set_transform(
