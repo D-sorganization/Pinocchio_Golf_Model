@@ -29,6 +29,16 @@ class LogPanel(QtWidgets.QTextEdit):
         )
 
 
+# Constants
+DT_DEFAULT = (
+    0.01  # [s] Physics time step. 10ms is standard for real-time visualization.
+)
+SLIDER_RANGE_RAD = 10.0  # [rad] Range for joint sliders provided in UI
+SLIDER_SCALE = 100.0  # Scale factor for QSlider (int) -> rad (float)
+COM_SPHERE_RADIUS = 0.02  # [m] Radius for Center of Mass visualization spheres
+COM_COLOR = 0xFFFF00  # Yellow color for COMs
+
+
 class PinocchioGUI(QtWidgets.QMainWindow):
     """Main GUI widget for Pinocchio robot visualization and computation."""
 
@@ -50,7 +60,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
 
         self.operating_mode = "dynamic"  # "dynamic", "kinematic"
         self.is_running = False
-        self.dt = 0.01
+        self.dt = DT_DEFAULT
 
         # Meshcat viewer
         # Do not open browser automatically; user can open Meshcat URL manually if desired.
@@ -61,9 +71,10 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         self._setup_ui()
 
         # Timer
+        # Timer
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self._game_loop)
-        # Timer started after load
+        # Timer will be started after a valid model is loaded
 
         # Try load default model
         default_urdf = (
@@ -187,11 +198,20 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             # Init state
             self._update_viewer()
 
+            # Restore overlays for new model if checkboxes are active
+            if self.chk_frames.isChecked():
+                self._toggle_frames(checked=True)
+            if self.chk_coms.isChecked():
+                self._toggle_coms(checked=True)
+
             if not self.timer.isActive():
                 self.timer.start(int(self.dt * 1000))
 
-        except Exception as e:  # noqa: BLE001
+        except (ValueError, RuntimeError) as e:
             self.log_write(f"Error loading URDF: {e}")
+        except Exception as e:  # noqa: BLE001
+            # Catch-all for unexpected errors
+            self.log_write(f"Unexpected error loading URDF: {e}")
 
     def _build_kinematic_controls(self) -> None:
         if self.model is None:
@@ -234,12 +254,15 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         r_layout.addWidget(QtWidgets.QLabel(f"{joint_name}:"))
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-        # Range +/- 10.0 rad (approx)
-        slider.setRange(-1000, 1000)
+        slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        # Range +/- SLIDER_RANGE_RAD
+        slider_min = int(-SLIDER_RANGE_RAD * SLIDER_SCALE)
+        slider_max = int(SLIDER_RANGE_RAD * SLIDER_SCALE)
+        slider.setRange(slider_min, slider_max)
         slider.setValue(0)
 
         spin = QtWidgets.QDoubleSpinBox()
-        spin.setRange(-10.0, 10.0)
+        spin.setRange(-SLIDER_RANGE_RAD, SLIDER_RANGE_RAD)
         spin.setSingleStep(0.1)
 
         # Connect
@@ -279,7 +302,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
                 slider.blockSignals(True)  # noqa: FBT003
                 spin.blockSignals(True)  # noqa: FBT003
 
-                slider.setValue(int(val * 100))
+                slider.setValue(int(val * SLIDER_SCALE))
                 spin.setValue(val)
 
                 slider.blockSignals(False)  # noqa: FBT003
@@ -288,7 +311,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
                 slider_idx += 1
 
     def _on_slider(self, val: int, spin: QtWidgets.QDoubleSpinBox, idx: int) -> None:
-        angle = val / 100.0
+        angle = val / SLIDER_SCALE
         spin.blockSignals(True)  # noqa: FBT003
         spin.setValue(angle)
         spin.blockSignals(False)  # noqa: FBT003
@@ -296,7 +319,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
 
     def _on_spin(self, val: float, slider: QtWidgets.QSlider, idx: int) -> None:
         slider.blockSignals(True)  # noqa: FBT003
-        slider.setValue(int(val * 100))
+        slider.setValue(int(val * SLIDER_SCALE))
         slider.blockSignals(False)  # noqa: FBT003
         self._update_q(idx, val)
 
@@ -339,15 +362,24 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         self._sync_kinematic_controls()
 
     def _game_loop(self) -> None:
-        if self.model is None or self.data is None or self.q is None:
+        if self.model is None or self.data is None or self.q is None or self.v is None:
             return
 
         if self.operating_mode == "dynamic" and self.is_running:
-            # Simple Forward Dynamics (Passive)
+            # --- Physics integration loop ---
+            # Set joint torques to zero to simulate passive dynamics (no actuation).
+            # This models the system's natural motion under gravity and inertia only.
             tau = np.zeros(self.model.nv)
+
+            # Compute joint accelerations using Articulated-Body Algorithm (ABA).
             a = pin.aba(self.model, self.data, self.q, self.v, tau)
 
-            # Semi-implicit Euler
+            # Integrate using the semi-implicit (symplectic) Euler method:
+            #   1. Update velocity: v_{n+1} = v_n + a * dt
+            #   2. Update position: q_{n+1} = integrate(q_n, v_{n+1} * dt)
+            # This method is preferred over explicit Euler for mechanical systems
+            # because it provides better energy behavior and stability, especially
+            # for stiff or underactuated systems.
             self.v += a * self.dt
             self.q = pin.integrate(self.model, self.q, self.v * self.dt)
 
@@ -395,8 +427,9 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             # Update transform
             T = self.data.oMf[i]  # noqa: N806
             # Convert Pinocchio SE3 (T) to a 4x4 homogeneous transformation matrix.
-            # Pinocchio's SE3.homogeneous property returns a 4x4 matrix representing the pose
-            # in the world frame.
+            # Pinocchio's SE3.homogeneous property returns a 4x4 matrix representing
+            # the pose in the world frame. Meshcat's set_transform expects a 4x4
+            # column-major matrix (compatible with this layout).
             M = T.homogeneous  # noqa: N806
             self.viewer[f"overlays/frames/{frame.name}"].set_transform(M)
 
@@ -441,7 +474,8 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             if self.model:
                 for i in range(1, self.model.njoints):
                     self.viewer[f"overlays/coms/{self.model.names[i]}"].set_object(
-                        g.Sphere(0.02), g.MeshLambertMaterial(color=0xFFFF00)
+                        g.Sphere(COM_SPHERE_RADIUS),
+                        g.MeshLambertMaterial(color=COM_COLOR),
                     )
             self._update_viewer()
 
