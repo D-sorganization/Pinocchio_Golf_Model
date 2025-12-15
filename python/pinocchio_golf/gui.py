@@ -254,7 +254,6 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         r_layout.addWidget(QtWidgets.QLabel(f"{joint_name}:"))
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-        slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         # Range +/- SLIDER_RANGE_RAD
         slider_min = int(-SLIDER_RANGE_RAD * SLIDER_SCALE)
         slider_max = int(SLIDER_RANGE_RAD * SLIDER_SCALE)
