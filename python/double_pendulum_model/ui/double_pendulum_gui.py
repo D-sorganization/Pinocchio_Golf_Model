@@ -35,7 +35,16 @@ from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
 from double_pendulum_model.physics.double_pendulum import (
+    DEFAULT_ARM_CENTER_OF_MASS_RATIO,
+    DEFAULT_ARM_LENGTH_M,
+    DEFAULT_ARM_MASS_KG,
+    DEFAULT_CLUBHEAD_MASS_KG,
+    DEFAULT_DAMPING_SHOULDER,
+    DEFAULT_DAMPING_WRIST,
     DEFAULT_PLANE_INCLINATION_DEG,
+    DEFAULT_SHAFT_COM_RATIO,
+    DEFAULT_SHAFT_LENGTH_M,
+    DEFAULT_SHAFT_MASS_KG,
     DoublePendulumDynamics,
     DoublePendulumParameters,
     DoublePendulumState,
@@ -245,27 +254,45 @@ class DoublePendulumApp:
     def _setup_physical_parameters(self, parent: tk.Widget, row: int) -> int:
         self._create_section_header(parent, "Physical Parameters", row)
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Upper length (m)", "0.75"))
+        self._add_labeled_row(
+            parent,
+            row,
+            UIEntryConfig("Upper length (m)", str(DEFAULT_ARM_LENGTH_M)),
+        )
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Upper mass (kg)", "7.5"))
+        self._add_labeled_row(
+            parent, row, UIEntryConfig("Upper mass (kg)", str(DEFAULT_ARM_MASS_KG))
+        )
         row += 1
         self._add_labeled_row(
             parent,
             row,
             UIEntryConfig(
                 "Upper COM ratio",
-                "0.45",
+                str(DEFAULT_ARM_CENTER_OF_MASS_RATIO),
                 "Center of mass position as fraction of length",
             ),
         )
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Lower length (m)", "1.0"))
+        self._add_labeled_row(
+            parent,
+            row,
+            UIEntryConfig("Lower length (m)", str(DEFAULT_SHAFT_LENGTH_M)),
+        )
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Shaft mass (kg)", "0.15"))
+        self._add_labeled_row(
+            parent, row, UIEntryConfig("Shaft mass (kg)", str(DEFAULT_SHAFT_MASS_KG))
+        )
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Clubhead mass (kg)", "0.20"))
+        self._add_labeled_row(
+            parent,
+            row,
+            UIEntryConfig("Clubhead mass (kg)", str(DEFAULT_CLUBHEAD_MASS_KG)),
+        )
         row += 1
-        self._add_labeled_row(parent, row, UIEntryConfig("Shaft COM ratio", "0.43"))
+        self._add_labeled_row(
+            parent, row, UIEntryConfig("Shaft COM ratio", str(DEFAULT_SHAFT_COM_RATIO))
+        )
         row += 1
         self._add_labeled_row(
             parent,
@@ -287,7 +314,7 @@ class DoublePendulumApp:
             row,
             UIEntryConfig(
                 "Shoulder damping",
-                "0.4",
+                str(DEFAULT_DAMPING_SHOULDER),
                 "Damping coefficient for upper segment (N·m·s/rad)",
             ),
         )
@@ -297,7 +324,7 @@ class DoublePendulumApp:
             row,
             UIEntryConfig(
                 "Wrist damping",
-                "0.25",
+                str(DEFAULT_DAMPING_WRIST),
                 "Damping coefficient for lower segment (N·m·s/rad)",
             ),
         )
