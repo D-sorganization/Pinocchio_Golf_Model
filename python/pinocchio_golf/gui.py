@@ -53,6 +53,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         self.dt = 0.01
 
         # Meshcat viewer
+        # Do not open browser automatically; user can open Meshcat URL manually if desired.
         self.viewer = viz.Visualizer()  # Let it find port
         logger.info("Meshcat URL: %s", self.viewer.url)
 
@@ -173,6 +174,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             # Load visual into Meshcat
             # Careful: meshcat URDF loader is separate from Pinocchio
             self.viewer["robot"].delete()
+            self.viewer["overlays"].delete()
             self.viewer["robot"].set_object(g.URDFLoader().load(fname))
 
             self.log_write(f"Loaded URDF: {fname}")
@@ -180,6 +182,7 @@ class PinocchioGUI(QtWidgets.QMainWindow):
 
             # Rebuild Kinematic Controls
             self._build_kinematic_controls()
+            self._sync_kinematic_controls()
 
             # Init state
             self._update_viewer()
@@ -218,7 +221,8 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         nq_joint = self.model.joints[i].nq
 
         if nq_joint != 1:
-            # Skip multi-dof joints for simple slider UI for now
+            # Multi-DOF joints (e.g., spherical) are not supported in the UI.
+            # Such joints are intentionally skipped and will not appear in the kinematic controls.
             return
 
         self.joint_names.append(joint_name)
@@ -230,7 +234,8 @@ class PinocchioGUI(QtWidgets.QMainWindow):
         r_layout.addWidget(QtWidgets.QLabel(f"{joint_name}:"))
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-        slider.setRange(-314, 314)
+        # Range +/- 10.0 rad (approx)
+        slider.setRange(-1000, 1000)
         slider.setValue(0)
 
         spin = QtWidgets.QDoubleSpinBox()
@@ -380,12 +385,18 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             return
 
         # Visualize joint frames (oMf)
+        # To optimize performance, we create frame objects once and update their transforms
+        # each frame. The Meshcat Python client caches objects, so updating transforms is
+        # efficient for visualization.
         for i, frame in enumerate(self.model.frames):
             if frame.name == "universe":
                 continue
 
             # Update transform
             T = self.data.oMf[i]  # noqa: N806
+            # Convert Pinocchio SE3 (T) to a 4x4 homogeneous transformation matrix.
+            # Pinocchio's SE3.homogeneous property returns a 4x4 matrix representing the pose
+            # in the world frame.
             M = T.homogeneous  # noqa: N806
             self.viewer[f"overlays/frames/{frame.name}"].set_transform(M)
 
@@ -398,8 +409,9 @@ class PinocchioGUI(QtWidgets.QMainWindow):
             # Joint i. Associated body has inertia.
             inertia = self.model.inertias[i]
             oMi = self.data.oMi[i]  # noqa: N806
-            # Body COM in world = oMi * local_com (inertia.lever)
-            com_world = oMi * inertia.lever
+            # Compute world-frame COM for each body by transforming the local COM (inertia.lever)
+            # through the joint placement (oMi).
+            com_world = oMi.act(inertia.lever)
 
             # Update Sphere Position
             self.viewer[f"overlays/coms/{self.model.names[i]}"].set_transform(
